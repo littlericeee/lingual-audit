@@ -58,6 +58,16 @@
                   { "type": "null" }
                 ]
               },
+              "source_url": {
+                "type": ["string", "null"],
+                "pattern": "^https?://"
+              },
+              "fetched_at": {
+                "oneOf": [
+                  { "$ref": "common.schema.json#/$defs/iso_datetime" },
+                  { "type": "null" }
+                ]
+              },
               "language_scope": {
                 "type": "string",
                 "enum": ["bilingual_en_zh", "zh_only", "en_only"]
@@ -133,6 +143,13 @@
             "items": { "$ref": "common.schema.json#/$defs/domain_tag" }
           },
           "description": "Optional parent/related domain mapping defined by the user's industry (e.g., fx -> [general_finance, general_ui])."
+        },
+        "web_domain_tiers": {
+          "type": "object",
+          "additionalProperties": { "$ref": "common.schema.json#/$defs/normative_level" }
+        },
+        "web_default_normative_level": {
+          "$ref": "common.schema.json#/$defs/normative_level"
         },
         "conflict_rules": {
           "type": "object",

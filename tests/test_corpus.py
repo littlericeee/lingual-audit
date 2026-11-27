@@ -5,9 +5,18 @@ from pathlib import Path
 
 import pytest
 
-from lingual_audit.contracts import sha256_text, validate_payload
-from lingual_audit.corpus import build_sqlite_index, ingest_corpus
+from lingual_audit.cli import main
+from lingual_audit.contracts import EXIT_CODES, sha256_text, validate_payload
+from lingual_audit.corpus import (
+    add_web_evidence,
+    build_sqlite_index,
+    ingest_corpus,
+    resolve_web_normative_level,
+)
 from lingual_audit.corpus.normalize import cjk_bigrams, normalize_text
+from lingual_audit.retrieval import retrieve_for_page
+from lingual_audit.review import prepare_review_packets, validate_reviews_against_index
+from lingual_audit.state import atomic_write_json
 
 FIXTURES = Path(__file__).parent / "fixtures" / "corpus"
 
@@ -64,9 +73,219 @@ def _assert_record_contract(records, raw_field):
         assert record["excerpt_hash"] == sha256_text(record[raw_field])
 
 
+def _web_policy(path: Path) -> Path:
+    atomic_write_json(
+        path,
+        {
+            "contract_version": "1.0.0",
+            "artifact_kind": "authority_policy",
+            "policy_version": "web-test-1",
+            "normative_precedence": [
+                "official_regulation",
+                "domain_glossary",
+                "reference_material",
+            ],
+            "region_fallback_order": {"GLOBAL": ["GLOBAL"]},
+            "domain_hierarchy": {},
+            "web_domain_tiers": {
+                "standards.example.org": "official_regulation",
+                "example.org": "domain_glossary",
+            },
+            "web_default_normative_level": "reference_material",
+            "conflict_rules": {
+                "preserve_regional_variants": True,
+                "forbid_en_only_as_target_translation": True,
+                "flag_same_scope_conflict": True,
+            },
+        },
+    )
+    return path
+
+
+def _web_page(path: Path, en_text: str, zh_text: str) -> Path:
+    fixture = json.loads(
+        (Path(__file__).parent / "fixtures" / "records" / "pages" / "PG-000001.json").read_text(
+            encoding="utf-8"
+        )
+    )
+    fixture["domain_tag"] = "general_ui"
+    fixture["items"] = [
+        {
+            **fixture["items"][0],
+            "hierarchy_path": "Example > Labels",
+            "en_text": en_text,
+            "zh_text": zh_text,
+            "sibling_labels": [],
+        }
+    ]
+    atomic_write_json(path, fixture)
+    return path
+
+
+def _web_review(path: Path, bundle: dict, *, verdict: str = "建议修改") -> Path:
+    candidate = bundle["candidates"][0]
+    atomic_write_json(
+        path,
+        {
+            "contract_version": "1.0.0",
+            "run_id": "RUN-20261127-0001",
+            "policy_version": "web-test-1",
+            "corpus_snapshot_hash": bundle["corpus_snapshot_hash"],
+            "reviews": [
+                {
+                    "item_id": bundle["item_id"],
+                    "page_id": "PG-000001",
+                    "menu_id": "MN-0002",
+                    "hierarchy_path": "Example > Labels",
+                    "domain_tag": "general_ui",
+                    "en_text": bundle["query"]["en_text"],
+                    "zh_text": bundle["query"]["zh_text"],
+                    "suggested_zh": "结算窗口" if verdict == "建议修改" else None,
+                    "verdict": verdict,
+                    "business_rationale": "Web evidence supports this terminology.",
+                    "evidence_refs": [
+                        {
+                            key: candidate[key]
+                            for key in ("evidence_id", "doc_id", "doc_version", "excerpt_hash")
+                        }
+                    ],
+                    "human_review_status": "pending",
+                }
+            ],
+            "consistency_findings": [],
+        },
+    )
+    return path
+
+
 def test_search_normalization():
     assert normalize_text("  ＦＸ\n\t交易对⼿⽅  ") == "fx 交易对手方"
     assert cjk_bigrams("A⼿\n 外汇；交易对⼿⽅") == "手 外汇 交易 易对 对手 手方"
+
+
+def test_add_bilingual_web_evidence_runs_full_verified_pipeline(tmp_path: Path) -> None:
+    manifest = _manifest(tmp_path)
+    policy = _web_policy(tmp_path / "authority_policy.json")
+    assert resolve_web_normative_level("https://standards.example.org/term", policy) == (
+        "official_regulation"
+    )
+    assert resolve_web_normative_level("https://docs.example.org/term", policy) == "domain_glossary"
+    assert resolve_web_normative_level("https://unlisted.invalid/term", policy) == (
+        "reference_material"
+    )
+
+    summary = add_web_evidence(
+        manifest,
+        "https://docs.example.org/terms/settlement-window",
+        "Settlement terminology",
+        "Settlement Window,结算窗口,The time allowed for settlement.",
+        en_term="Settlement Window",
+        zh_term="结算窗口",
+        policy_path=policy,
+    )
+    updated = json.loads(manifest.read_text(encoding="utf-8"))
+    assert validate_payload("corpus_manifest", updated) == []
+    document = updated["documents"][0]
+    assert document["source_url"] == summary["source_url"]
+    assert document["fetched_at"]
+    assert summary["normative_level"] == "domain_glossary"
+    assert (tmp_path / summary["rel_path"]).is_file()
+
+    normalized = tmp_path / "normalized"
+    db_path = tmp_path / "index.sqlite"
+    ingest_corpus(manifest, normalized)
+    build_sqlite_index(normalized, db_path)
+    page = _web_page(tmp_path / "records" / "pages" / "PG-000001.json", "Settlement Window", "旧译")
+    bundle = retrieve_for_page(
+        db_path,
+        page,
+        target_region="GLOBAL",
+        policy_path=policy,
+    )[0]
+    assert bundle["candidates"][0]["doc_id"] == summary["doc_id"]
+
+    packets_path = tmp_path / "records" / "packets.json"
+    prepare_review_packets(
+        db_path,
+        tmp_path / "records",
+        packets_path,
+        target_region="GLOBAL",
+        policy_path=policy,
+    )
+    review_path = _web_review(tmp_path / "review.json", bundle)
+    result = validate_reviews_against_index(
+        review_path,
+        db_path,
+        records_dir=tmp_path / "records",
+        packets_path=packets_path,
+    )
+    assert result["valid"] is True
+    assert result["checked_citations"] == 1
+
+
+def test_add_english_web_evidence_cannot_authorize_change(tmp_path: Path) -> None:
+    manifest = _manifest(tmp_path)
+    policy = _web_policy(tmp_path / "authority_policy.json")
+    summary = add_web_evidence(
+        manifest,
+        "https://unlisted.invalid/guide",
+        "Settlement guide <draft>",
+        "Settlement Window describes a period used by the interface.",
+        en_term="Settlement Window",
+        policy_path=policy,
+    )
+    assert summary["format"] == "html"
+    assert summary["language_scope"] == "en_only"
+    html = (tmp_path / summary["rel_path"]).read_text(encoding="utf-8")
+    assert "&lt;draft&gt;" in html
+
+    normalized = tmp_path / "normalized"
+    db_path = tmp_path / "index.sqlite"
+    ingest_corpus(manifest, normalized)
+    build_sqlite_index(normalized, db_path)
+    page = _web_page(tmp_path / "records" / "pages" / "PG-000001.json", "Settlement Window", "旧译")
+    bundle = retrieve_for_page(
+        db_path,
+        page,
+        target_region="GLOBAL",
+        policy_path=policy,
+    )[0]
+    assert bundle["candidates"][0]["support_type"] == "concept_definition_only"
+    result = validate_reviews_against_index(_web_review(tmp_path / "review.json", bundle), db_path)
+    assert result["valid"] is False
+    assert any("EN-only" in error for error in result["errors"])
+
+
+def test_cli_add_web(tmp_path: Path, capsys) -> None:
+    manifest = _manifest(tmp_path)
+    result = main(
+        [
+            "corpus",
+            "add-web",
+            "--manifest",
+            str(manifest),
+            "--url",
+            "https://docs.example.org/terms/widget",
+            "--title",
+            "Widget terminology",
+            "--excerpt",
+            "Widget,部件,A synthetic bilingual term.",
+            "--en-term",
+            "Widget",
+            "--zh-term",
+            "部件",
+            "--domain",
+            "general_ui,assembly",
+        ]
+    )
+    assert result == EXIT_CODES["success"]
+    output = json.loads(capsys.readouterr().out)
+    assert output["doc_id"] == "DOC-WEB-000001"
+    assert output["format"] == "csv"
+    assert json.loads(manifest.read_text(encoding="utf-8"))["documents"][0]["domain_tags"] == [
+        "general_ui",
+        "assembly",
+    ]
 
 
 def test_fixture_ingest_and_fts_index(tmp_path):

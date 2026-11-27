@@ -24,6 +24,8 @@ from lingual_audit.sanitize import is_forbidden_secret_path
 from .parsers import parse_document
 from .storage import build_sqlite_index as build_sqlite_index
 from .storage import json_line, staged_path
+from .web import add_web_evidence as add_web_evidence
+from .web import resolve_web_normative_level as resolve_web_normative_level
 
 PARSER_VERSION = "1.0.0"
 

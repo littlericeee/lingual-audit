@@ -114,9 +114,28 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 
 def _cmd_corpus(args: argparse.Namespace) -> int:
-    from lingual_audit.corpus import build_sqlite_index, ingest_corpus
+    from lingual_audit.corpus import add_web_evidence, build_sqlite_index, ingest_corpus
 
     try:
+        if args.corpus_action == "add-web":
+            domains = [tag.strip() for tag in args.domain.split(",") if tag.strip()]
+            res = add_web_evidence(
+                manifest_path=Path(args.manifest),
+                url=args.url,
+                title=args.title,
+                excerpt=args.excerpt,
+                en_term=args.en_term,
+                zh_term=args.zh_term,
+                domain_tags=domains,
+                region_scope=args.region,
+                target_locale=args.target_locale,
+                policy_path=Path(args.policy) if args.policy else None,
+                normative_level=args.normative_level,
+                publisher=args.publisher,
+                doc_version=args.doc_version,
+            )
+            _emit_json(res)
+            return EXIT_CODES["success"]
         if args.corpus_action == "ingest":
             res = ingest_corpus(
                 manifest_path=Path(args.manifest),
@@ -357,6 +376,21 @@ def build_parser() -> argparse.ArgumentParser:
 
     p_corp = sub.add_parser("corpus", help="Ingest and index multi-format reference corpora.")
     corp_sub = p_corp.add_subparsers(dest="corpus_action", required=True)
+    p_cweb = corp_sub.add_parser("add-web", help="Record a web excerpt in the local corpus cache.")
+    p_cweb.add_argument("--manifest", required=True)
+    p_cweb.add_argument("--url", required=True)
+    p_cweb.add_argument("--title", required=True)
+    p_cweb.add_argument("--excerpt", required=True)
+    p_cweb.add_argument("--en-term")
+    p_cweb.add_argument("--zh-term")
+    p_cweb.add_argument("--domain", default="general_ui", help="Comma-separated domain tags.")
+    p_cweb.add_argument("--region", default="GLOBAL")
+    p_cweb.add_argument("--target-locale")
+    p_cweb.add_argument("--policy")
+    p_cweb.add_argument("--normative-level")
+    p_cweb.add_argument("--publisher")
+    p_cweb.add_argument("--doc-version")
+    p_cweb.set_defaults(func=_cmd_corpus)
     p_cing = corp_sub.add_parser("ingest", help="Parse corpus manifest into normalized JSONL artifacts.")
     p_cing.add_argument("--manifest", required=True)
     p_cing.add_argument("--output-dir", required=True)

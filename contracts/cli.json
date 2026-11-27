@@ -40,8 +40,23 @@
     "corpus": {
       "status": "planned",
       "planned_phase": "phase_1",
-      "subcommands": ["ingest", "index"],
-      "summary": "Parse PDF/HTML/XLSX corpus documents into normalized glossary entries and chunks, then build rebuildable SQLite FTS5 index."
+      "subcommands": ["add-web", "ingest", "index"],
+      "add_web_options": {
+        "--manifest": "Required corpus manifest path.",
+        "--url": "Required HTTP(S) source URL.",
+        "--title": "Required web source title.",
+        "--excerpt": "Required non-empty verbatim excerpt.",
+        "--en-term": "Optional English term for bilingual CSV evidence.",
+        "--zh-term": "Optional Chinese term for bilingual CSV evidence.",
+        "--domain": "Comma-separated domain tags; defaults to general_ui.",
+        "--region": "Region scope; defaults to GLOBAL.",
+        "--target-locale": "Optional target locale; defaults to zh-CN when --zh-term is provided.",
+        "--policy": "Optional authority_policy.json path for web domain tiering.",
+        "--normative-level": "Optional explicit authority tier override.",
+        "--publisher": "Optional publisher; defaults to the source hostname.",
+        "--doc-version": "Optional document version; defaults to the current UTC date."
+      },
+      "summary": "Record deterministic local web evidence, parse corpus documents into normalized glossary entries and chunks, then build a rebuildable SQLite FTS5 index."
     },
     "retrieve": {
       "status": "planned",
