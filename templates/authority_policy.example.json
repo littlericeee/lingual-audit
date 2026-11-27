@@ -1,0 +1,25 @@
+{
+  "contract_version": "1.0.0",
+  "artifact_kind": "authority_policy",
+  "policy_version": "1.0.0",
+  "industry_label": "general_enterprise",
+  "normative_precedence": [
+    "internal_confirmed",
+    "official_regulation",
+    "industry_standard",
+    "international_standard",
+    "domain_glossary",
+    "reference_material"
+  ],
+  "region_fallback_order": {
+    "CN_MAINLAND": ["CN_MAINLAND", "GLOBAL"],
+    "HK": ["HK", "GLOBAL"],
+    "GLOBAL": ["GLOBAL"]
+  },
+  "domain_hierarchy": {},
+  "conflict_rules": {
+    "preserve_regional_variants": true,
+    "forbid_en_only_as_target_translation": true,
+    "flag_same_scope_conflict": true
+  }
+}

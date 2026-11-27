@@ -1,40 +1,97 @@
 # enterprise-i18n-ops
 
-An enterprise-grade, **domain-agnostic**, self-contained Agent Skill and deterministic Python CLI toolchain for **bilingual UI inventory, pluggable tiered hybrid RAG terminology standardization, and auditable Excel delivery** on complex B2B web systems.
+[中文说明 (README_CN.md)](README_CN.md)
 
-> **Status:** Phase 0 domain-agnostic contracts, CLI core, and sanitized fixtures complete; Phase 1 corpus/RAG/delivery implementation in progress.
+An enterprise-grade, **domain-agnostic**, self-contained **Agent Skill + deterministic Python CLI/RAG toolchain** for bilingual UI inventory, domain terminology standardization, and auditable Excel delivery on complex B2B web systems.
 
-## Bring-Your-Own-Glossary (BYOG) — Works for Any Industry
+> **Why this exists:** Complex enterprise web applications (ERP, FinTech/Treasury, Healthcare/EHR, Manufacturing/MES, Legal/SaaS) often accumulate thousands of inconsistent, mistranslated, or raw-key UI strings across hundreds of screens. Manual bilingual audits take weeks of cross-team effort, while naive "let an LLM read reference PDFs" workflows suffer from missed recalls, fabricated citations, cross-menu drift, and unsafe form mutations. `enterprise-i18n-ops` separates **probabilistic LLM judgment** from **deterministic UI collection, hybrid retrieval, citation verification, and Excel read-back**.
 
-This repository ships with **zero hardcoded industry assumptions** and an **empty default knowledge base slot**:
+---
 
-- Running `i18n-ops run init` creates a clean workspace with `corpus/raw/`, an empty `corpus/manifest.json`, and an editable `corpus/authority_policy.json`.
-- Drop **any industry's** bilingual glossaries, regulatory PDFs, HTML guidelines, or XLSX/CSV field dictionaries (FinTech, Healthcare/EHR, Manufacturing/MES, Legal, Supply Chain/ERP, SaaS, etc.) into `corpus/raw/`, declare their open `domain_tags` and `region_scope` in `manifest.json`, and run `corpus ingest` + `corpus index`.
-- Even with an empty corpus, the retrieval engine degrades cleanly (`no_authoritative_hit=True`) without crashing or fabricating citations.
-- Synthetic financial fixtures under `tests/fixtures/` serve strictly as one pluggable test pack demonstrating hard terminology edge cases (short acronyms, cross-domain polysemy, regional variants, EN-only definitions).
+## Key Capabilities
+
+- **Bring-Your-Own-Glossary (BYOG) — Any Industry, Zero Hardcoding**: Ships with an empty default knowledge base slot (`corpus/raw/`, `corpus/manifest.json`, `corpus/authority_policy.json`). Drop any industry's `PDF`, `HTML`, `XLSX`, or `CSV` glossaries and standards in—no code changes required. Even an empty corpus degrades gracefully (`no_authoritative_hit=True`).
+- **Zero-Vendor Self-Contained Agent Skill**: Native [SKILL.md](SKILL.md) + [references/](references) + [templates/](templates) work across Claude Code, Codex, Antigravity, and WorkBuddy without vendoring third-party skills.
+- **Policy-Constrained Exploration with `thorough` Network Isolation**: Supports `quick` / `standard` / `thorough` depths. In `thorough` mode, synthetic test-data probing to surface client-side validation messages is gated by **Playwright network isolation** (`service_workers="block"`, HTTP + WebSocket outbound blocked until clean form reset is verified).
+- **Single-File SQLite FTS5 + Applicability-First Arbitration**: Parses multi-format corpora into dual verbatim/NFKC-normalized views with CJK bigram indexing and exact short-acronym channels (`FX`, `IRS`, `BIC`), screening sources by **domain/region/locale applicability first** before applying normative precedence.
+- **6-Column Color-Coded, Formula-Safe Excel Delivery**: Generates per-menu worksheets (`页面层级 | 系统英文 | 系统中文 | AI 建议中文 | 比对结论 | 修改理由与业务依据`) with distinct verdict fill colors, mandatory business-first rationales for non-`保留` items, formula-injection protection, and automatic `openpyxl` read-back verification.
+
+---
 
 ## Architecture Overview
 
-1. **Zero-Vendor Self-Contained Bilingual Exploration (`SKILL.md` + `references/`)**:
-   - Absorbs universal route/state discovery and file-based session recovery natively (no vendored third-party skills; optionally pairs with `app-docs`, `planning-with-files`, and `playwright` when present).
-   - Supports `quick` / `standard` / `thorough` depths. In `thorough` mode, synthetic test-data probing to trigger client-side validation messages is gated by **Playwright-enforced network isolation** (Service Worker disabled; HTTP & WebSocket outbound blocked until state reset); hosts without network isolation automatically skip synthetic input probes.
-2. **Rebuildable Local Knowledge Base & Applicability-First Retrieval**:
-   - Parses heterogeneous reference corpora (`PDF` via `pdfplumber`, `HTML`, `XLSX`, `CSV`) into dual verbatim/normalized views stored in single-file **SQLite + FTS5** (with CJK bigram + exact short-acronym channels).
-   - Evaluates authority via **config-driven applicability filtering first** (`domain`, `region`, `target_locale`, `version`, `effective_date`), then intra-scope precedence—preserving legitimate regional variants and never allowing English-only definitions to masquerade as target-language translations.
-   - Optional dense vector + RRF retrieval and reranking are evaluated via 3-arm Golden Set ablations (`V1 doc-browsing` vs `Glossary + FTS5` vs `Hybrid Vector`).
-3. **6-Column Color-Coded Excel Delivery & Traceability**:
-   - Per-menu sheets with 6 fixed columns: `页面层级 | 系统英文 | 系统中文 | AI 建议中文 | 比对结论 | 修改理由与业务依据`.
-   - Distinct cell fill colors per verdict (`保留`, `建议修改`, `缺译`, `来源冲突`, `单语限制`, `待业务确认`, `待核对`), mandatory business-first rationale for non-`保留` items, formula-injection protection, mandatory `openpyxl` read-back verification, and full structured provenance in companion `review.json` / `delivery-manifest.json`.
+```mermaid
+flowchart TD
+    A["Target B2B Web App (EN / Target Locale)"] --> B["Policy-Constrained Explorer (quick / standard / thorough)"]
+    B --> C["External Workspace Ledger (run.json + records/menu-map.json + pages/*.json)"]
+    D["BYOG Domain Corpus (PDF / HTML / XLSX / CSV + authority_policy.json)"] --> E["Deterministic Parsers (pdfplumber / BS4 / openpyxl / CSV + NFKC)"]
+    E --> F["Rebuildable SQLite Index (glossary_entries + document_chunks + FTS5 + CJK bigrams)"]
+    C --> G["Context-Aware Retrieval (UI Hierarchy + Control + Siblings + Domain)"]
+    G --> F
+    F --> H["Controlled Evidence Bundles (Applicability Screened + Conflict Flags)"]
+    H --> I["Host LLM Structured Review (Cites ONLY Bundle evidence_id)"]
+    I --> J["Citation Integrity Verifier & Concept-Scoped Consistency Audit"]
+    J --> K["6-Column Color-Coded Formula-Safe Excel + delivery-manifest.json"]
+    K --> L["Automatic openpyxl Read-Back Verification"]
+```
 
-## Quick Start (Development)
+---
+
+## Product Design Decisions & Trade-offs
+
+1. **Why Applicability Screening First instead of a Global Agency Ranking?**
+   In cross-border enterprise software, offshore/regional terminology (e.g., `zh-HK` vs `zh-CN`) is often a legitimate regional variant rather than an error, and an English-only international standard explains concept meaning without authorizing a Chinese UI label. Screening by `(domain, region, target_locale, language_scope)` before comparing `normative_precedence` prevents false overrides and keeps business conflict visible.
+2. **Why Exact Glossary + SQLite FTS5 + CJK Bigrams BEFORE Dense Vectors?**
+   B2B UI labels are short (often 2–3 character acronyms or 2-character Chinese terms where naive embeddings drift and SQLite's built-in `trigram` tokenizer cannot match <3 characters). A single-file SQLite + FTS5 + NFKC/CJK-bigram engine runs with **zero external daemons, zero API keys, and deterministic tests**, while leaving an extensible RRF vector hook evaluated strictly via 3-arm Golden Set ablations.
+3. **Why Playwright Network Isolation for `thorough` Synthetic Input Probing?**
+   "Not clicking Submit" is not a safety proof—enterprise forms frequently trigger `POST`/`PUT` auto-save requests on `input`, `change`, or `blur`. Enforcing `service_workers="block"` plus HTTP/WebSocket outbound blocking during the probe-and-reset window guarantees zero backend writes; hosts that cannot enforce network isolation automatically skip synthetic probes.
+4. **Why 6-Column Color-Coded Excel + Sibling JSON Manifests?**
+   Business reviewers want immediate visual triage (UI hierarchy path on the left, color-coded verdict pill, and business-first rationale on the right), while engineering audits need immutable SHA-256 provenance and row hashes. Keeping Excel clean and formula-safe while storing full structured citations in `review.json` / `delivery-manifest.json` satisfies both audiences.
+
+---
+
+## 6-Column Excel Output Specification
+
+| Column | Header | Purpose |
+|---|---|---|
+| A | `页面层级` | Full UI hierarchy (`Menu > Page State > Section > Control`) |
+| B | `系统英文` | Verbatim observed English UI text (explicit text cell, formula-safe) |
+| C | `系统中文` | Verbatim observed target-language UI text |
+| D | `AI 建议中文` | Suggested translation (blank when `保留` or uncertain) |
+| E | `比对结论` | Color-coded verdict (`保留`, `建议修改`, `缺译`, `来源冲突`, `单语限制`, `待业务确认`, `待核对`) |
+| F | `修改理由与业务依据` | Business-first rationale with brief provenance tag (required whenever verdict ≠ `保留`) |
+
+---
+
+## Quick Start
 
 ```bash
+# 1. Create virtualenv & install
 python3 -m venv --system-site-packages .venv
-.venv/bin/pip install -e ".[dev]"
+.venv/bin/pip install -e ".[dev,browser]"
+
+# 2. Check runtime capabilities
 .venv/bin/i18n-ops doctor --json
-.venv/bin/pytest
+
+# 3. Initialize an external BYOG workspace for any industry
+.venv/bin/i18n-ops run init \
+  --workspace /tmp/my-audit-ws \
+  --run-id RUN-20261127-0001 \
+  --app-label "My B2B System" \
+  --industry "manufacturing_mes" \
+  --depth standard
+
+# 4. Drop your PDF/HTML/XLSX/CSV glossaries into /tmp/my-audit-ws/corpus/raw/
+#    and declare them in /tmp/my-audit-ws/corpus/manifest.json, then:
+.venv/bin/i18n-ops corpus ingest --manifest /tmp/my-audit-ws/corpus/manifest.json --output-dir /tmp/my-audit-ws/corpus/normalized
+.venv/bin/i18n-ops corpus index --normalized-dir /tmp/my-audit-ws/corpus/normalized --db-path /tmp/my-audit-ws/corpus/index.sqlite
+
+# 5. Run deterministic test suite
+.venv/bin/pytest -v -p no:anyio
 ```
+
+---
 
 ## Acknowledgments
 
-Inspired by route-discovery patterns from `app-docs` and disk-backed session checkpointing from `planning-with-files`. Neither package is vendored into this repository.
+Inspired by route-discovery conventions from `app-docs` and disk-backed session checkpointing from `planning-with-files`. Neither skill is vendored into this repository; all exploration, checkpointing, retrieval, and delivery protocols are implemented natively under MIT license.
