@@ -18,19 +18,27 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-browser = ["playwright>=1.45"]
+browser = ["playwright>=1.48"]
 semantic = ["numpy>=1.26", "sentence-transformers>=3.0"]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 
 [project.scripts]
 lingual-audit = "lingual_audit.cli:main"
 
-[tool.setuptools.packages.find]
-where = ["src"]
+[tool.setuptools]
+packages = ["lingual_audit", "lingual_audit.corpus", "lingual_audit.explore", "lingual_audit.schemas"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+"lingual_audit.schemas" = "contracts"
+
+[tool.setuptools.package-data]
+"lingual_audit.schemas" = ["*.json"]
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
 pythonpath = ["src"]
+markers = ["demo_server: requires permission to bind a local HTTP socket"]
 
 [tool.ruff]
 line-length = 100

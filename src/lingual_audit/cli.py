@@ -191,6 +191,7 @@ def _cmd_review(args: argparse.Namespace) -> int:
                 review_path=Path(args.review_file),
                 db_path=Path(args.db_path),
                 records_dir=Path(args.records_dir) if args.records_dir else None,
+                packets_path=Path(args.packets) if args.packets else None,
             )
             _emit_json(res)
             return EXIT_CODES["success"] if res.get("valid") else EXIT_CODES["integrity_or_citation_or_readback_failed"]
@@ -392,6 +393,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_rval.add_argument("--review-file", required=True)
     p_rval.add_argument("--db-path", required=True)
     p_rval.add_argument("--records-dir", required=True)
+    p_rval.add_argument("--packets", help="Optional prepared packets.json path.")
     p_rval.set_defaults(func=_cmd_review)
 
     p_rcon = rev_sub.add_parser("consistency", help="Run concept-scoped cross-menu consistency audit.")

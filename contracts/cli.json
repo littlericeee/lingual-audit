@@ -52,6 +52,9 @@
       "status": "planned",
       "planned_phase": "phase_1",
       "subcommands": ["prepare", "ingest", "validate", "consistency"],
+      "validate_options": {
+        "--packets": "Optional prepared packets.json path; defaults to <records-dir>/packets.json when present."
+      },
       "summary": "Prepare evidence packets for host LLM review, ingest decisions, verify citation integrity, and run concept-scoped cross-menu consistency checks."
     },
     "export": {

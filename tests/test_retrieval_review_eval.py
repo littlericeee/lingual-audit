@@ -543,6 +543,26 @@ def write_review(tmp_path: Path, *items: dict[str, Any], **fields: Any) -> Path:
     return path
 
 
+def write_packets(tmp_path: Path, *bundles: dict[str, Any], name: str = "packets.json") -> Path:
+    path = tmp_path / name
+    atomic_write_json(
+        path,
+        {
+            "contract_version": "1.0.0",
+            "corpus_snapshot_hash": SNAPSHOT,
+            "policy_version": "1.0.0",
+            "items": [
+                {
+                    "ui_item": {"item_id": bundle["item_id"]},
+                    "evidence_bundle": bundle,
+                }
+                for bundle in bundles
+            ],
+        },
+    )
+    return path
+
+
 @pytest.fixture
 def records(tmp_path: Path) -> Path:
     records_dir = tmp_path / "records"
@@ -634,6 +654,89 @@ def test_english_only_chunk_cannot_authorize_change(finance_db: Path, tmp_path: 
     assert not validate_reviews_against_index(write_review(tmp_path, item), finance_db)["valid"]
 
 
+def test_change_verdict_requires_evidence(finance_db: Path, tmp_path: Path) -> None:
+    item = review_item(
+        "Counterparty",
+        "反对党",
+        verdict="建议修改",
+        suggested_zh="交易对手方",
+        evidence_refs=[],
+    )
+
+    result = validate_reviews_against_index(write_review(tmp_path, item), finance_db)
+
+    assert result["valid"] is False
+    assert any("evidence" in error.lower() for error in result["errors"])
+
+
+@pytest.mark.parametrize("auto_discover", [False, True])
+def test_citation_must_belong_to_items_prepared_bundle(
+    finance_db: Path,
+    records: Path,
+    tmp_path: Path,
+    auto_discover: bool,
+) -> None:
+    current_bundle = evidence(finance_db, "Counterparty")
+    unrelated_bundle = evidence(finance_db, "Value Date")
+    item = review_item(
+        "Counterparty",
+        "反对党",
+        verdict="建议修改",
+        suggested_zh="起息日",
+        evidence_refs=[citation(unrelated_bundle)],
+    )
+    packets_path = write_packets(records if auto_discover else tmp_path, current_bundle)
+
+    result = validate_reviews_against_index(
+        write_review(tmp_path, item),
+        finance_db,
+        records_dir=records if auto_discover else None,
+        packets_path=None if auto_discover else packets_path,
+    )
+
+    assert result["valid"] is False
+    assert any("evidence bundle" in error for error in result["errors"])
+
+
+def test_citation_in_items_prepared_bundle_is_valid(finance_db: Path, tmp_path: Path) -> None:
+    bundle = evidence(finance_db, "Counterparty")
+    item = review_item(
+        "Counterparty",
+        "反对党",
+        verdict="建议修改",
+        suggested_zh="交易对手方",
+        evidence_refs=[citation(bundle)],
+    )
+
+    result = validate_reviews_against_index(
+        write_review(tmp_path, item),
+        finance_db,
+        packets_path=write_packets(tmp_path, bundle),
+    )
+
+    assert result["valid"] is True
+
+
+def test_empty_packet_bundle_allows_uncertain_review_without_citations(
+    empty_db: Path, tmp_path: Path
+) -> None:
+    bundle = evidence(empty_db, "Unknown")
+    item = review_item(
+        "Unknown",
+        "待确认",
+        verdict="待业务确认",
+        business_rationale="No authoritative evidence was retrieved.",
+    )
+
+    result = validate_reviews_against_index(
+        write_review(tmp_path, item),
+        empty_db,
+        packets_path=write_packets(tmp_path, bundle),
+    )
+
+    assert result["valid"] is True
+
+
 @pytest.mark.parametrize(
     ("field", "value"),
     [
@@ -675,6 +778,14 @@ def test_cross_menu_concept_drift_and_cross_domain_polysemy(tmp_path: Path) -> N
             number=4,
             verdict="建议修改",
             suggested_zh="交割日",
+            evidence_refs=[
+                {
+                    "evidence_id": "GLS-VALUE-DATE",
+                    "doc_id": "DOC-CN-FX-2025",
+                    "doc_version": "2025",
+                    "excerpt_hash": "d" * 64,
+                }
+            ],
         ),
         review_item("Margin", "忽略", number=5, verdict="待核对"),
     )

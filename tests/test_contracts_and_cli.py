@@ -13,6 +13,7 @@ from lingual_audit.contracts import (
     EXCEL_COLUMNS,
     EXIT_CODES,
     VERDICT_STYLES,
+    contracts_dir,
     find_repo_root,
     validate_file,
     validate_payload,
@@ -28,6 +29,25 @@ from lingual_audit.state import (
 
 REPO_ROOT = find_repo_root()
 FIXTURES = REPO_ROOT / "tests" / "fixtures"
+
+
+def test_contracts_dir_falls_back_to_packaged_schemas(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    from lingual_audit import contracts
+
+    package_dir = tmp_path / "lingual_audit"
+    schemas_dir = package_dir / "schemas"
+    schemas_dir.mkdir(parents=True)
+    (schemas_dir / "common.schema.json").write_text("{}\n", encoding="utf-8")
+    monkeypatch.setattr(contracts, "__file__", str(package_dir / "contracts.py"))
+    monkeypatch.setattr(
+        contracts,
+        "find_repo_root",
+        lambda start=None: (_ for _ in ()).throw(FileNotFoundError("repository unavailable")),
+    )
+
+    assert contracts_dir() == schemas_dir
 
 
 def test_committed_fixtures_pass_contract_validation() -> None:
@@ -120,6 +140,14 @@ def test_review_schema_enforces_business_rationale_for_non_keep_verdicts() -> No
     bad_review["reviews"][0]["business_rationale"] = (
         "外汇即期簿记语境下指交易契约对方机构，原译“反对党”为严重误译 [CN-FX-2025 §1.1]。"
     )
+    bad_review["reviews"][0]["evidence_refs"] = [
+        {
+            "evidence_id": "GLS-COUNTERPARTY",
+            "doc_id": "DOC-CN-FX-2025",
+            "doc_version": "2025",
+            "excerpt_hash": "c" * 64,
+        }
+    ]
     assert validate_payload("review", bad_review) == []
 
 

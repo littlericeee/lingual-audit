@@ -86,7 +86,12 @@ def find_repo_root(start: Path | None = None) -> Path:
 
 
 def contracts_dir(root: Path | None = None) -> Path:
-    return find_repo_root(root) / "contracts"
+    if root is not None:
+        return root.resolve() / "contracts"
+    try:
+        return find_repo_root() / "contracts"
+    except FileNotFoundError:
+        return Path(__file__).resolve().parent / "schemas"
 
 
 def load_cli_spec(root: Path | None = None) -> dict[str, Any]:
@@ -219,6 +224,8 @@ def _check_semantic_invariants(kind: str, payload: dict[str, Any]) -> list[str]:
                 )
             if verdict == "建议修改" and not (rec.get("suggested_zh") or "").strip():
                 errors.append(f"Review {iid} has verdict='建议修改' but suggested_zh is empty")
+            if verdict == "建议修改" and not rec.get("evidence_refs"):
+                errors.append(f"Review {iid} has verdict='建议修改' but evidence_refs is empty")
 
     if kind == "delivery":
         seen_sheets: set[str] = set()

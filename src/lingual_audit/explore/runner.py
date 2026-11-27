@@ -29,6 +29,10 @@ _VALIDATION_SELECTOR = (
     ".err:visible, .error:visible, [role='alert']:visible, "
     "[aria-live='assertive']:visible, [data-validation]:visible"
 )
+_NO_ITEMS_BLOCKER = (
+    "No translatable UI items observed with built-in selectors; use host browser capture "
+    "or add semantic attributes."
+)
 
 
 def _normalized_text(value: str | None) -> str:
@@ -349,7 +353,7 @@ def explore_target(
                 "menu_hierarchy_en": [en_name],
                 "domain_tag": domain,
                 "observed_at": utc_now_iso(),
-                "coverage_status": "fully_inspected",
+                "coverage_status": "fully_inspected" if items else "blocked",
                 "states": [
                     {
                         "state_id": state_id,
@@ -357,8 +361,8 @@ def explore_target(
                         "parent_condition": None,
                         "iframe_context": None,
                         "reproduce_steps": ["Open menu using its stable data-menu control."],
-                        "coverage_status": "fully_inspected",
-                        "blocker_reason": None,
+                        "coverage_status": "fully_inspected" if items else "blocked",
+                        "blocker_reason": None if items else _NO_ITEMS_BLOCKER,
                     }
                 ],
                 "items": items,
@@ -375,8 +379,8 @@ def explore_target(
                     "page_id": page_id,
                     "page_record_path": f"pages/{page_id}.json",
                     "domain_tag": domain,
-                    "coverage_status": "fully_inspected",
-                    "blocker_reason": None,
+                    "coverage_status": "fully_inspected" if items else "blocked",
+                    "blocker_reason": None if items else _NO_ITEMS_BLOCKER,
                 }
             )
 
@@ -396,21 +400,29 @@ def explore_target(
                 # delayed fetch/XHR callbacks and mutating requests.
                 route.abort()
 
-            probe_context.route_web_socket("**/*", block_websocket)
-            try:
-                probe_page = probe_context.new_page()
-                probe_page.goto(url, wait_until="domcontentloaded")
-                _wait_for_stability(probe_page)
-                probe_context.route("**/*", abort_request)
-                first_menu = menu_controls[0]
-                if first_menu.get("id"):
-                    _by_id(probe_page, str(first_menu["id"])).click()
-                probe_results, probe_messages = _probe_inputs(probe_page, policy)
-            except RuntimeError as exc:
-                blocked_note = str(exc)
-                outcome_status = "blocked"
-            finally:
+            if not hasattr(probe_context, "route_web_socket"):
                 probe_context.close()
+                blocked_note = (
+                    "Playwright BrowserContext.route_web_socket is unavailable "
+                    "(requires playwright>=1.48); skipped thorough synthetic input probes."
+                )
+                outcome_status = "skipped"
+            else:
+                probe_context.route_web_socket("**/*", block_websocket)
+                try:
+                    probe_page = probe_context.new_page()
+                    probe_page.goto(url, wait_until="domcontentloaded")
+                    _wait_for_stability(probe_page)
+                    probe_context.route("**/*", abort_request)
+                    first_menu = menu_controls[0]
+                    if first_menu.get("id"):
+                        _by_id(probe_page, str(first_menu["id"])).click()
+                    probe_results, probe_messages = _probe_inputs(probe_page, policy)
+                except RuntimeError as exc:
+                    blocked_note = str(exc)
+                    outcome_status = "blocked"
+                finally:
+                    probe_context.close()
             first_record = page_records[0]
             for key in sorted(set(probe_messages["en"]) | set(probe_messages["zh"])):
                 en_text = probe_messages["en"].get(key)
@@ -430,6 +442,10 @@ def explore_target(
         if not context.pages or not context.pages[0].is_closed():
             context.close()
         browser.close()
+
+    if page_records and all(record["coverage_status"] == "blocked" for record in page_records):
+        blocked_note = _NO_ITEMS_BLOCKER
+        outcome_status = "blocked"
 
     observed_at = utc_now_iso()
     menu_map = {
@@ -455,8 +471,14 @@ def explore_target(
                     "page_id": record["page_id"],
                     "state_id": record["states"][0]["state_id"],
                     "language": language,
-                    "status": "done",
-                    "blocker_reason": None,
+                    "status": (
+                        "blocked" if record["coverage_status"] == "blocked" else "done"
+                    ),
+                    "blocker_reason": (
+                        record["states"][0]["blocker_reason"]
+                        if record["coverage_status"] == "blocked"
+                        else None
+                    ),
                     "updated_at": observed_at,
                 }
             )

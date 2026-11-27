@@ -153,6 +153,7 @@ def validate_reviews_against_index(
     review_path: Path,
     db_path: Path,
     records_dir: Path | None = None,
+    packets_path: Path | None = None,
 ) -> dict[str, Any]:
     """Verify the review schema, citation identities, and optionally the observed UI text."""
     try:
@@ -164,15 +165,53 @@ def validate_reviews_against_index(
         return _validation_result(errors)
 
     observed = _observations(records_dir, errors) if records_dir is not None else None
+    if packets_path is not None and not packets_path.is_file():
+        return _validation_result([f"Packets file does not exist: {packets_path}"])
+    if packets_path is None and records_dir is not None:
+        discovered_packets = records_dir / "packets.json"
+        if discovered_packets.is_file():
+            packets_path = discovered_packets
+
+    packets = None
+    allowed_citations: dict[str, set[tuple[str, str, str, str]]] | None = None
+    if packets_path is not None:
+        try:
+            packets = _read_json(packets_path)
+            allowed_citations = {}
+            identity_fields = ("evidence_id", "doc_id", "doc_version", "excerpt_hash")
+            for packet in packets["items"]:
+                bundle = packet["evidence_bundle"]
+                item_id = bundle["item_id"]
+                allowed = allowed_citations.setdefault(item_id, set())
+                for candidate in bundle.get("candidates", []):
+                    allowed.add(tuple(candidate[field] for field in identity_fields))
+        except (KeyError, OSError, TypeError, ValueError) as exc:
+            return _validation_result([f"Failed to read packets file {packets_path}: {exc}"])
+
     checked_citations = 0
     with read_index(db_path) as db:
-        if review["corpus_snapshot_hash"] != snapshot_hash(db):
+        index_snapshot = snapshot_hash(db)
+        if review["corpus_snapshot_hash"] != index_snapshot:
             errors.append("corpus_snapshot_hash does not match the index")
+        if packets is not None and packets.get("corpus_snapshot_hash") != index_snapshot:
+            errors.append("packets corpus_snapshot_hash does not match the index")
         for item in review["reviews"]:
             item_id = item["item_id"]
             verified = []
+            if allowed_citations is not None and item_id not in allowed_citations:
+                errors.append(f"{item_id}: item_id is missing from prepared packets")
             for ref in item["evidence_refs"]:
                 checked_citations += 1
+                identity = tuple(
+                    ref[field]
+                    for field in ("evidence_id", "doc_id", "doc_version", "excerpt_hash")
+                )
+                if allowed_citations is not None and identity not in allowed_citations.get(
+                    item_id, set()
+                ):
+                    errors.append(
+                        f"{item_id}: citation {ref['evidence_id']} is not in the item's prepared evidence bundle"
+                    )
                 citation = lookup_citation(db, ref)
                 if citation is None:
                     errors.append(
@@ -180,16 +219,16 @@ def validate_reviews_against_index(
                     )
                 else:
                     verified.append(citation)
-            if (
-                item["verdict"] == "建议修改"
-                and verified
-                and all(
+            if item["verdict"] == "建议修改" and not verified:
+                errors.append(f"{item_id}: 建议修改 requires at least one verified citation")
+            elif item["verdict"] == "建议修改" and all(
                     citation["support_type"] == "concept_definition_only"
                     or citation["language_scope"] == "en_only"
                     for citation in verified
+                ):
+                errors.append(
+                    f"{item_id}: 建议修改 requires a verified citation that is neither EN-only nor concept-definition-only"
                 )
-            ):
-                errors.append(f"{item_id}: EN-only evidence cannot authorize 建议修改")
 
             if observed is not None:
                 linked = observed.get(item_id, [])
