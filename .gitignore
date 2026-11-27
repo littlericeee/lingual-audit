@@ -1,0 +1,51 @@
+# Credentials and environment files
+.env
+.env.*
+!.env.example
+!.env.test
+*.pem
+*.key
+cookies.*
+*storage-state*.json
+auth.json
+*.auth.json
+*auth-state*.json
+*auth_state*.json
+
+# Browser profiles and automation artifacts
+*profile*/
+.playwright-cli/
+playwright-report/
+test-results/
+
+# Local RAG index caches and runtime outputs (keep committed fixtures)
+data/raw/
+data/index/
+*.sqlite
+*.sqlite3
+*.faiss
+*.index
+records/
+deliverables/
+
+# Python cache, virtualenvs, and build artifacts
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.ruff_cache/
+.mypy_cache/
+.venv/
+venv/
+*.egg-info/
+dist/
+build/
+
+# OS, editor, temporary files, and local drafts
+.DS_Store
+Thumbs.db
+*.tmp
+*.bak
+*.log
+tmp/
+local-notes/
+private/
