@@ -8,19 +8,19 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     ContractValidationError,
     validate_payload,
 )
-from enterprise_i18n_ops.retrieval import (
+from lingual_audit.retrieval import (
     load_authority_policy,
     normalize_text,
     read_index,
     retrieve_for_page,
     snapshot_hash,
 )
-from enterprise_i18n_ops.state import atomic_write_json
+from lingual_audit.state import atomic_write_json
 
 
 def _page_paths(records_dir: Path) -> list[Path]:

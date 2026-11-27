@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://enterprise-i18n-ops.local/contracts/evidence.schema.json",
+  "$id": "https://lingual-audit.local/contracts/evidence.schema.json",
   "title": "Retrieval Query and Controlled Evidence Bundle Contract",
   "type": "object",
   "additionalProperties": false,

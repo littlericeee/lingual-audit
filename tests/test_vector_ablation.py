@@ -5,10 +5,10 @@ from pathlib import Path
 
 import pytest
 
-from enterprise_i18n_ops.contracts import validate_payload
-from enterprise_i18n_ops.corpus import build_sqlite_index, ingest_corpus
-from enterprise_i18n_ops.retrieval import retrieve_for_item
-from enterprise_i18n_ops.vector import (
+from lingual_audit.contracts import validate_payload
+from lingual_audit.corpus import build_sqlite_index, ingest_corpus
+from lingual_audit.retrieval import retrieve_for_item
+from lingual_audit.vector import (
     HashedNgramEmbedder,
     populate_embeddings,
     run_three_arm_ablation,

@@ -1,4 +1,4 @@
-"""Unified CLI entrypoint for enterprise-i18n-ops."""
+"""Unified CLI entrypoint for lingual-audit."""
 
 from __future__ import annotations
 
@@ -8,15 +8,15 @@ import sys
 from pathlib import Path
 from typing import Any
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     EXIT_CODES,
     SCHEMA_MAP,
     ContractValidationError,
     validate_file,
 )
-from enterprise_i18n_ops.doctor import collect_doctor_report
-from enterprise_i18n_ops.sanitize import scan_directory
-from enterprise_i18n_ops.state import (
+from lingual_audit.doctor import collect_doctor_report
+from lingual_audit.sanitize import scan_directory
+from lingual_audit.state import (
     compute_workspace_status,
     init_workspace,
     resume_workspace,
@@ -114,7 +114,7 @@ def _cmd_run(args: argparse.Namespace) -> int:
 
 
 def _cmd_corpus(args: argparse.Namespace) -> int:
-    from enterprise_i18n_ops.corpus import build_sqlite_index, ingest_corpus
+    from lingual_audit.corpus import build_sqlite_index, ingest_corpus
 
     try:
         if args.corpus_action == "ingest":
@@ -141,7 +141,7 @@ def _cmd_corpus(args: argparse.Namespace) -> int:
 
 
 def _cmd_retrieve(args: argparse.Namespace) -> int:
-    from enterprise_i18n_ops.retrieval import retrieve_for_page
+    from lingual_audit.retrieval import retrieve_for_page
 
     try:
         bundles = retrieve_for_page(
@@ -167,7 +167,7 @@ def _cmd_retrieve(args: argparse.Namespace) -> int:
 
 
 def _cmd_review(args: argparse.Namespace) -> int:
-    from enterprise_i18n_ops.review import (
+    from lingual_audit.review import (
         check_cross_menu_consistency,
         prepare_review_packets,
         validate_reviews_against_index,
@@ -207,7 +207,7 @@ def _cmd_review(args: argparse.Namespace) -> int:
 
 
 def _cmd_export(args: argparse.Namespace) -> int:
-    from enterprise_i18n_ops.delivery import export_workbook
+    from lingual_audit.delivery import export_workbook
 
     try:
         manifest = export_workbook(
@@ -231,7 +231,7 @@ def _cmd_export(args: argparse.Namespace) -> int:
 
 
 def _cmd_verify(args: argparse.Namespace) -> int:
-    from enterprise_i18n_ops.delivery import verify_delivery
+    from lingual_audit.delivery import verify_delivery
 
     try:
         report = verify_delivery(
@@ -253,7 +253,7 @@ def _cmd_verify(args: argparse.Namespace) -> int:
 
 
 def _cmd_evaluate(args: argparse.Namespace) -> int:
-    from enterprise_i18n_ops.evaluate import run_golden_evaluation
+    from lingual_audit.evaluate import run_golden_evaluation
 
     try:
         report = run_golden_evaluation(
@@ -280,7 +280,7 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
 
 def _cmd_explore(args: argparse.Namespace) -> int:
     try:
-        from enterprise_i18n_ops.explore.runner import explore_target
+        from lingual_audit.explore.runner import explore_target
 
         result = explore_target(
             url=args.url,
@@ -303,7 +303,7 @@ def _cmd_explore(args: argparse.Namespace) -> int:
 
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
-        prog="i18n-ops",
+        prog="lingual-audit",
         description="Domain-agnostic bilingual UI audit, pluggable hybrid RAG terminology standardization, and Excel delivery CLI.",
     )
     sub = parser.add_subparsers(dest="command", required=True)

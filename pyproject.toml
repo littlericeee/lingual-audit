@@ -3,9 +3,9 @@ requires = ["setuptools>=68.0"]
 build-backend = "setuptools.build_meta"
 
 [project]
-name = "enterprise-i18n-ops"
+name = "lingual-audit"
 version = "0.1.0"
-description = "Enterprise-grade bilingual UI inventory, terminology standardization, and tiered hybrid RAG audit workflow for complex B2B web systems."
+description = "Bilingual UI inventory, terminology standardization, and tiered hybrid RAG audit workflow for complex web systems."
 readme = "README.md"
 requires-python = ">=3.11"
 license = { text = "MIT" }
@@ -23,7 +23,7 @@ semantic = ["numpy>=1.26", "sentence-transformers>=3.0"]
 dev = ["pytest>=8.0", "ruff>=0.6"]
 
 [project.scripts]
-i18n-ops = "enterprise_i18n_ops.cli:main"
+lingual-audit = "lingual_audit.cli:main"
 
 [tool.setuptools.packages.find]
 where = ["src"]

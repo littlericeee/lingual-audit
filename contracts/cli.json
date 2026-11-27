@@ -1,6 +1,6 @@
 {
   "contract_version": "1.0.0",
-  "cli_entrypoint": "i18n-ops",
+  "cli_entrypoint": "lingual-audit",
   "exit_codes": {
     "0": "success",
     "2": "invalid_arguments",

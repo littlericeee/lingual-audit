@@ -5,9 +5,9 @@ from pathlib import Path
 
 import pytest
 
-from enterprise_i18n_ops.contracts import sha256_text, validate_payload
-from enterprise_i18n_ops.corpus import build_sqlite_index, ingest_corpus
-from enterprise_i18n_ops.corpus.normalize import cjk_bigrams, normalize_text
+from lingual_audit.contracts import sha256_text, validate_payload
+from lingual_audit.corpus import build_sqlite_index, ingest_corpus
+from lingual_audit.corpus.normalize import cjk_bigrams, normalize_text
 
 FIXTURES = Path(__file__).parent / "fixtures" / "corpus"
 

@@ -2,7 +2,7 @@
   "contract_version": "1.0.0",
   "artifact_kind": "authority_policy",
   "policy_version": "1.0.0",
-  "industry_label": "general_enterprise",
+  "industry_label": "general_web",
   "normative_precedence": [
     "internal_confirmed",
     "official_regulation",

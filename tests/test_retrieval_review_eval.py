@@ -12,15 +12,15 @@ from typing import Any
 
 import pytest
 
-from enterprise_i18n_ops.contracts import ContractValidationError, sha256_text, validate_payload
-from enterprise_i18n_ops.evaluate import predict_from_bundle, run_golden_evaluation
-from enterprise_i18n_ops.retrieval import retrieve_for_item, retrieve_for_page
-from enterprise_i18n_ops.review import (
+from lingual_audit.contracts import ContractValidationError, sha256_text, validate_payload
+from lingual_audit.evaluate import predict_from_bundle, run_golden_evaluation
+from lingual_audit.retrieval import retrieve_for_item, retrieve_for_page
+from lingual_audit.review import (
     check_cross_menu_consistency,
     prepare_review_packets,
     validate_reviews_against_index,
 )
-from enterprise_i18n_ops.state import atomic_write_json, default_authority_policy
+from lingual_audit.state import atomic_write_json, default_authority_policy
 
 FIXTURES = Path(__file__).parent / "fixtures"
 GOLDEN = FIXTURES / "golden" / "golden_set_v0.json"

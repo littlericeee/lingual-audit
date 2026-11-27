@@ -11,9 +11,9 @@ from typing import ClassVar
 
 import pytest
 
-from enterprise_i18n_ops.contracts import validate_file
-from enterprise_i18n_ops.explore.policy import ExplorationPolicy
-from enterprise_i18n_ops.explore.runner import explore_target
+from lingual_audit.contracts import validate_file
+from lingual_audit.explore.policy import ExplorationPolicy
+from lingual_audit.explore.runner import explore_target
 
 FIXTURE_DIR = Path(__file__).parent / "fixtures" / "demo_app"
 

@@ -1,10 +1,10 @@
 # Exploration & Bilingual UI Collection
 
-This reference defines the native, self-contained discovery protocol for `enterprise-i18n-ops`. It absorbs universal route/state discovery mechanics and combines them with B2B control-level rigor—requiring zero vendored third-party skills.
+This reference defines the native, self-contained discovery protocol for `lingual-audit`. It absorbs universal route/state discovery mechanics and combines them with deep control-level rigor for complex web systems—requiring zero vendored third-party skills.
 
 ## 1. Browser Tool Detection & Session Hygiene
 
-- **Auto-detect capability**: Prefer this repository's built-in Playwright runner (`i18n-ops explore`) when `thorough` synthetic input probing or deterministic batch collection is needed. For `quick` or `standard` read-only browsing, host-provided Chrome/Playwright MCP tools may also be used.
+- **Auto-detect capability**: Prefer this repository's built-in Playwright runner (`lingual-audit explore`) when `thorough` synthetic input probing or deterministic batch collection is needed. For `quick` or `standard` read-only browsing, host-provided Chrome/Playwright MCP tools may also be used.
 - **User-managed authentication**: Let the user sign in inside their browser session. Never read, copy, print, or commit `.env*`, cookies, credentials, or browser `storage-state` files.
 - **Verify actual rendered state**: Never treat a URL change or language-toggle button label as proof of login or language switch. Always verify the rendered document language (`html[lang]`), visible page title, and menu text.
 - **Anti-skeleton / stability gate**: Before extracting UI text, wait until loading spinners, skeleton placeholders, and pending initial fetches settle so untranslated fallback keys or transient loading labels are not misrecorded.
@@ -42,9 +42,9 @@ Inspect horizontal, vertical, and nested scroll regions across distinct page sta
 
 ### Hard Guardrails for `thorough` Synthetic Input Probing
 
-Never rely on "not clicking Submit" as a safety guarantee—B2B forms frequently fire implicit `POST`/`PUT` auto-save requests on `input`, `change`, or `blur`. Therefore:
+Never rely on "not clicking Submit" as a safety guarantee—complex web forms frequently fire implicit `POST`/`PUT` auto-save requests on `input`, `change`, `blur`, or debounced timers. Therefore:
 
-1. **Mandatory Network Isolation**: `thorough` synthetic probing requires the Playwright runner to launch with `service_workers="block"` and install outbound HTTP + WebSocket request blockers **before** typing synthetic test strings, keeping isolation active until form reset is verified.
+1. **Mandatory Network Isolation**: `thorough` synthetic probing requires the Playwright runner to run probes in a dedicated isolated context with `service_workers="block"` and outbound HTTP + WebSocket blockers active for the entire probe session—never calling `unroute`, and destroying the probe context immediately after reset verification.
 2. **Automatic Safe Skip**: If the host environment cannot enforce network isolation (e.g., an extension-only browser without request interception), **skip synthetic input probing** and mark those states as `skipped` / `blocked` with reason.
 3. **Strict Action Denylist**: Never click save, submit, execute, approve, delete, import, or export buttons, and never send implicit-submit `Enter` keys.
 4. **Initially Empty Inputs Only**: Probe only empty, clear-purpose inputs using benign synthetic strings (e.g. `123!`). Never overwrite pre-populated business data.

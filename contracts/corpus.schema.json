@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://enterprise-i18n-ops.local/contracts/corpus.schema.json",
+  "$id": "https://lingual-audit.local/contracts/corpus.schema.json",
   "title": "Domain-Agnostic Corpus Manifest, Authority Policy, and Normalized Artifact Contracts",
   "oneOf": [
     { "$ref": "#/$defs/corpus_manifest" },

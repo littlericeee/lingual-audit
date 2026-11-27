@@ -4,8 +4,8 @@ from pathlib import Path
 
 import pytest
 
-from enterprise_i18n_ops.contracts import sha256_file
-from enterprise_i18n_ops.state import (
+from lingual_audit.contracts import sha256_file
+from lingual_audit.state import (
     atomic_write_text,
     init_workspace,
     load_run_state,
@@ -45,7 +45,7 @@ def test_atomic_write_cleans_temp_file_after_replace_error(tmp_path: Path, monke
     def fail_replace(source: Path, destination: Path) -> None:
         raise OSError("synthetic replace failure")
 
-    monkeypatch.setattr("enterprise_i18n_ops.state.os.replace", fail_replace)
+    monkeypatch.setattr("lingual_audit.state.os.replace", fail_replace)
     with pytest.raises(OSError, match="synthetic replace failure"):
         atomic_write_text(target, "payload")
 

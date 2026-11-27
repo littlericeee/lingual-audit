@@ -8,14 +8,14 @@ from pathlib import Path
 from typing import Any
 from urllib.parse import urlparse
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     ContractValidationError,
     sha256_text,
     validate_payload,
 )
-from enterprise_i18n_ops.explore.policy import DEPTHS, ExplorationPolicy
-from enterprise_i18n_ops.state import (
+from lingual_audit.explore.policy import DEPTHS, ExplorationPolicy
+from lingual_audit.state import (
     atomic_write_json,
     atomic_write_text,
     init_workspace,

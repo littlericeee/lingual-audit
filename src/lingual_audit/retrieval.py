@@ -13,12 +13,12 @@ from contextlib import closing, contextmanager
 from pathlib import Path
 from typing import Any
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     ContractValidationError,
     validate_payload,
 )
-from enterprise_i18n_ops.state import default_authority_policy
+from lingual_audit.state import default_authority_policy
 
 _MODES = {"glossary_fts", "hybrid_vector", "hybrid_vector_rerank"}
 _SCOPE_ORDER = (

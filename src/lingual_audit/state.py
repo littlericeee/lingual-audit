@@ -9,7 +9,7 @@ from datetime import UTC, datetime
 from pathlib import Path
 from typing import Any
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     ContractValidationError,
     sha256_file,

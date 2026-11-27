@@ -21,7 +21,7 @@ from openpyxl.utils import get_column_letter
 from openpyxl.utils.exceptions import InvalidFileException
 from openpyxl.worksheet.worksheet import Worksheet
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     EXCEL_COLUMNS,
     VERDICT_STYLES,
@@ -30,7 +30,7 @@ from enterprise_i18n_ops.contracts import (
     sha256_text,
     validate_payload,
 )
-from enterprise_i18n_ops.state import atomic_write_json, utc_now_iso
+from lingual_audit.state import atomic_write_json, utc_now_iso
 
 _SUMMARY_SHEETS = ("_Summary", "_Consistency")
 _ILLEGAL_TITLE = re.compile(r"[:\\/?*\[\]\x00-\x1f]")

@@ -13,13 +13,13 @@ from contextlib import ExitStack
 from pathlib import Path
 from typing import Any
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     ContractValidationError,
     sha256_file,
     sha256_text,
     validate_payload,
 )
-from enterprise_i18n_ops.sanitize import is_forbidden_secret_path
+from lingual_audit.sanitize import is_forbidden_secret_path
 
 from .parsers import parse_document
 from .storage import build_sqlite_index as build_sqlite_index

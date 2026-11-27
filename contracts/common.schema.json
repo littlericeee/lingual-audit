@@ -1,7 +1,7 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://enterprise-i18n-ops.local/contracts/common.schema.json",
-  "title": "Common Domain-Agnostic Definitions for enterprise-i18n-ops",
+  "$id": "https://lingual-audit.local/contracts/common.schema.json",
+  "title": "Common Domain-Agnostic Definitions for lingual-audit",
   "$defs": {
     "contract_version": {
       "type": "string",

@@ -48,6 +48,6 @@ All runtime files live inside the external workspace (`--workspace <dir>`):
 ## 3. Atomic Checkpointing & Safe Resume
 
 - Every JSON and SQLite update uses **same-directory temporary file staging + `fsync` + atomic `os.replace()`** under a single-writer convention (important on Windows/WSL DrvFS mounts).
-- Run `i18n-ops run resume --workspace <dir>` after any interruption:
+- Run `lingual-audit run resume --workspace <dir>` after any interruption:
   1. Any task unit left in `running` state is safely re-queued to `pending` with a reminder to re-verify clean UI state. **Never replay interrupted synthetic input actions automatically.**
   2. Corpus manifest and snapshot hashes are checked; if reference documents or policies changed, downstream reviews are flagged for re-validation so stale conclusions cannot silently persist.

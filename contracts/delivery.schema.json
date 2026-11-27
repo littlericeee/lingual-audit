@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://enterprise-i18n-ops.local/contracts/delivery.schema.json",
+  "$id": "https://lingual-audit.local/contracts/delivery.schema.json",
   "title": "Excel Workbook Delivery Manifest Contract",
   "type": "object",
   "additionalProperties": false,

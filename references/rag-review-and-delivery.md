@@ -2,18 +2,18 @@
 
 ## 1. Bring-Your-Own-Glossary (BYOG) Corpus Setup
 
-`enterprise-i18n-ops` is **industry-agnostic** and ships with an empty default knowledge base slot. To audit any industry's system (finance, healthcare/EHR, manufacturing/MES, legal, supply chain, SaaS):
+`lingual-audit` is **industry-agnostic** and ships with an empty default knowledge base slot. To audit any industry's system (finance, healthcare/EHR, manufacturing/MES, legal, supply chain, SaaS):
 
 1. Drop your reference documents (`PDF`, `HTML`, `XLSX`, `CSV`) into `<workspace>/corpus/raw/`.
 2. Register each document in `<workspace>/corpus/manifest.json` with open `domain_tags` (e.g. `clinical_trial`, `warehouse_wms`, `fx`), `region_scope` (e.g. `CN_MAINLAND`, `HK`, `US`, `EU`, `GLOBAL`), `target_locale` (e.g. `zh-CN`, `zh-HK`), `normative_level`, and `language_scope` (`bilingual_en_zh` | `zh_only` | `en_only`).
 3. Customize `<workspace>/corpus/authority_policy.json` to define your industry's `normative_precedence`, `region_fallback_order`, `domain_hierarchy`, and `conflict_rules`.
-4. Run `i18n-ops corpus ingest` and `i18n-ops corpus index`.
+4. Run `lingual-audit corpus ingest` and `lingual-audit corpus index`.
 
 > **Empty Corpus Fallback**: If `documents` is empty, ingestion and indexing still succeed cleanly, and retrieval emits `candidates: []` with `conflict_flags.no_authoritative_hit = true` so the review never crashes or fabricates citations.
 
 ## 2. Applicability-First Hybrid Retrieval & Conflict Arbitration
 
-Retrieval (`i18n-ops retrieve` / `i18n-ops review prepare`) combines:
+Retrieval (`lingual-audit retrieve` / `lingual-audit review prepare`) combines:
 
 1. **Exact & Alias Glossary Channel (`exact_glossary` / `alias_glossary`)**: NFKC-normalized exact matching over terms, aliases, and field codes—reliably resolving 1–3 char acronyms (e.g., `FX`, `IRS`, `BIC`) and preserving all polysemous candidates.
 2. **Context-Aware FTS5 + CJK Bigram Channel (`fts_bm25` / `cjk_bigram`)**: Queries SQLite FTS5 using `en_text`, `hierarchy_path`, `control_type`, `sibling_labels`, and `domain_tag`. Existing UI target text is used only as a weak secondary tie-breaker so mistranslations never hijack search.
@@ -32,12 +32,12 @@ Sources are screened for **applicability first** (`domain` + `domain_hierarchy`,
 ## 3. Controlled Review, Citation Integrity & Consistency Audit
 
 - The host LLM receives each item's `ui_item` + `evidence_bundle` (`records/packets.json`) and may cite **only** `evidence_id` entries inside that bundle.
-- `i18n-ops review validate` mechanically checks schema compliance, `corpus_snapshot_hash` alignment, exact `(evidence_id, doc_id, doc_version, excerpt_hash)` existence in `index.sqlite`, EN-only authorization prohibition, and verbatim UI text match.
-- `i18n-ops review consistency` checks cross-menu drift **per `(concept_key, domain_tag)`**: same-domain terminology drift is flagged as `conflict`, while intentional cross-domain polysemy is reported separately as `advisory_polysemy`. Unconfirmed AI suggestions are never auto-written back into the authoritative glossary.
+- `lingual-audit review validate` mechanically checks schema compliance, `corpus_snapshot_hash` alignment, exact `(evidence_id, doc_id, doc_version, excerpt_hash)` existence in `index.sqlite`, EN-only authorization prohibition, and verbatim UI text match.
+- `lingual-audit review consistency` checks cross-menu drift **per `(concept_key, domain_tag)`**: same-domain terminology drift is flagged as `conflict`, while intentional cross-domain polysemy is reported separately as `advisory_polysemy`. Unconfirmed AI suggestions are never auto-written back into the authoritative glossary.
 
 ## 4. 6-Column Color-Coded Excel Deliverable
 
-`i18n-ops export` produces one worksheet per deliverable feature menu in menu-map order with **6 fixed columns**:
+`lingual-audit export` produces one worksheet per deliverable feature menu in menu-map order with **6 fixed columns**:
 
 | Col | Header | Content Rule |
 |---|---|---|

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://enterprise-i18n-ops.local/contracts/eval.schema.json",
+  "$id": "https://lingual-audit.local/contracts/eval.schema.json",
   "title": "Golden Set and Evaluation Report Contract",
   "oneOf": [
     { "$ref": "#/$defs/golden_set" },

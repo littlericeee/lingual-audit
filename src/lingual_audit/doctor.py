@@ -1,4 +1,4 @@
-"""Environment capability probe for enterprise-i18n-ops (read-only, never reads secrets)."""
+"""Environment capability probe for lingual-audit (read-only, never reads secrets)."""
 
 from __future__ import annotations
 
@@ -9,7 +9,7 @@ import sqlite3
 import sys
 from typing import Any
 
-from enterprise_i18n_ops.contracts import CONTRACT_VERSION, EXCEL_COLUMNS
+from lingual_audit.contracts import CONTRACT_VERSION, EXCEL_COLUMNS
 
 _DIST_NAMES: dict[str, str] = {
     "yaml": "PyYAML",

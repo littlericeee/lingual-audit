@@ -1,6 +1,6 @@
-"""enterprise-i18n-ops: Bilingual UI inventory, tiered hybrid RAG audit, and Excel delivery."""
+"""lingual-audit: Bilingual UI inventory, tiered hybrid RAG audit, and Excel delivery."""
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     EXCEL_COLUMNS,
     EXIT_CODES,

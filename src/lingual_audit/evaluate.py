@@ -8,21 +8,21 @@ from collections import defaultdict
 from pathlib import Path
 from typing import Any
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     VALID_VERDICTS,
     ContractValidationError,
     validate_payload,
 )
-from enterprise_i18n_ops.retrieval import (
+from lingual_audit.retrieval import (
     normalize_text,
     read_index,
     retrieve_for_item,
     snapshot_hash,
     supports_translation,
 )
-from enterprise_i18n_ops.review import lookup_citation
-from enterprise_i18n_ops.state import utc_now_iso
+from lingual_audit.review import lookup_citation
+from lingual_audit.state import utc_now_iso
 
 _RAW_KEY = re.compile(r"[a-z_][a-z0-9_-]*(?:\.[a-z0-9_-]+){2,}", re.IGNORECASE | re.ASCII)
 _ABSTENTIONS = {"待业务确认", "单语限制", "待核对"}

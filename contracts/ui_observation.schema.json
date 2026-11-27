@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://enterprise-i18n-ops.local/contracts/ui_observation.schema.json",
+  "$id": "https://lingual-audit.local/contracts/ui_observation.schema.json",
   "title": "UI Observation Contracts (Menu Map & Page Inventory)",
   "oneOf": [
     { "$ref": "#/$defs/menu_map" },

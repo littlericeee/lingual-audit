@@ -2,7 +2,7 @@
   "contract_version": "1.0.0",
   "artifact_kind": "corpus_manifest",
   "snapshot_id": "SNAP-EXAMPLE-001",
-  "industry_label": "general_enterprise",
+  "industry_label": "general_web",
   "created_at": "2026-11-27T00:00:00Z",
   "documents": []
 }

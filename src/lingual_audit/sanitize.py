@@ -186,7 +186,7 @@ def scan_directory(
             continue
 
         # Avoid self-matching regex literals in this sanitizer file itself.
-        if rel.as_posix() == "src/enterprise_i18n_ops/sanitize.py":
+        if rel.as_posix() == "src/lingual_audit/sanitize.py":
             continue
 
         scanned_files += 1

@@ -4,13 +4,13 @@ import re
 
 import yaml
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     EXCEL_COLUMNS,
     VERDICT_STYLES,
     find_repo_root,
     validate_file,
 )
-from enterprise_i18n_ops.sanitize import scan_directory
+from lingual_audit.sanitize import scan_directory
 
 REPO_ROOT = find_repo_root()
 MARKDOWN_LINK = re.compile(r"(?<!!)\[[^]]*]\(([^)]+)\)")
@@ -21,7 +21,7 @@ def test_skill_frontmatter() -> None:
     text = skill.read_text(encoding="utf-8")
     assert text.startswith("---\n")
     frontmatter = yaml.safe_load(text.split("---", 2)[1])
-    assert frontmatter["name"] == "enterprise-i18n-ops"
+    assert frontmatter["name"] == "lingual-audit"
     assert frontmatter["description"].strip()
 
 

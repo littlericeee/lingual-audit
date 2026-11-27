@@ -13,20 +13,20 @@ from collections.abc import Callable, Sequence
 from pathlib import Path
 from typing import Any, Protocol
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     ContractValidationError,
     validate_payload,
 )
-from enterprise_i18n_ops.evaluate import predict_from_bundle
-from enterprise_i18n_ops.retrieval import (
+from lingual_audit.evaluate import predict_from_bundle
+from lingual_audit.retrieval import (
     normalize_text,
     read_index,
     retrieve_for_item,
     snapshot_hash,
 )
-from enterprise_i18n_ops.review import lookup_citation
-from enterprise_i18n_ops.state import utc_now_iso
+from lingual_audit.review import lookup_citation
+from lingual_audit.state import utc_now_iso
 
 _TOKEN = re.compile(r"[^\W_]+", re.UNICODE)
 _METRICS = (

@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "$id": "https://enterprise-i18n-ops.local/contracts/review.schema.json",
+  "$id": "https://lingual-audit.local/contracts/review.schema.json",
   "title": "Structured Terminology Review Contract",
   "type": "object",
   "additionalProperties": false,

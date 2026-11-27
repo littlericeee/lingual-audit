@@ -13,7 +13,7 @@ from openpyxl.packaging.relationship import Relationship
 from openpyxl.styles import PatternFill
 from openpyxl.workbook.external_link.external import ExternalBook, ExternalLink
 
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     EXCEL_COLUMNS,
     VERDICT_STYLES,
@@ -22,7 +22,7 @@ from enterprise_i18n_ops.contracts import (
     sha256_text,
     validate_payload,
 )
-from enterprise_i18n_ops.delivery import export_workbook, verify_delivery
+from lingual_audit.delivery import export_workbook, verify_delivery
 
 _EXPECTED_FILLS = {
     "保留": "E8F5E9",

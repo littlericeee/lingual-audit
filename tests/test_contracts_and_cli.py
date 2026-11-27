@@ -7,8 +7,8 @@ from pathlib import Path
 
 import pytest
 
-from enterprise_i18n_ops.cli import main
-from enterprise_i18n_ops.contracts import (
+from lingual_audit.cli import main
+from lingual_audit.contracts import (
     CONTRACT_VERSION,
     EXCEL_COLUMNS,
     EXIT_CODES,
@@ -17,8 +17,8 @@ from enterprise_i18n_ops.contracts import (
     validate_file,
     validate_payload,
 )
-from enterprise_i18n_ops.sanitize import is_forbidden_secret_path, scan_directory
-from enterprise_i18n_ops.state import (
+from lingual_audit.sanitize import is_forbidden_secret_path, scan_directory
+from lingual_audit.state import (
     compute_workspace_status,
     init_workspace,
     load_run_state,
@@ -235,7 +235,7 @@ def test_workspace_init_creates_empty_byog_corpus_and_safe_resume(tmp_path: Path
     state = init_workspace(
         workspace=ws,
         run_id="RUN-20261127-0001",
-        app_label="Demo Enterprise Portal",
+        app_label="Demo Web Portal",
         industry_label="manufacturing_mes",
         depth="thorough",
     )

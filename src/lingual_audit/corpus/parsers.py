@@ -18,7 +18,7 @@ from openpyxl import load_workbook
 from openpyxl.utils import get_column_letter
 from pdfplumber.page import Page
 
-from enterprise_i18n_ops.contracts import sha256_text
+from lingual_audit.contracts import sha256_text
 
 from .normalize import normalize_text
 
