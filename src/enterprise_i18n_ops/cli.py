@@ -27,6 +27,14 @@ def _emit_json(payload: Any) -> None:
     sys.stdout.write(json.dumps(payload, ensure_ascii=False, indent=2) + "\n")
 
 
+def _emit_command_error(exc: Exception) -> int:
+    """Map expected command failures to the frozen CLI exit-code contract."""
+    sys.stderr.write(f"Error: {exc}\n")
+    if isinstance(exc, FileNotFoundError):
+        return EXIT_CODES["integrity_or_citation_or_readback_failed"]
+    return EXIT_CODES["contract_or_semantic_validation_failed"]
+
+
 def _cmd_doctor(args: argparse.Namespace) -> int:
     report = collect_doctor_report()
     if args.json:
@@ -154,6 +162,8 @@ def _cmd_retrieve(args: argparse.Namespace) -> int:
     except NotImplementedError as exc:
         sys.stderr.write(f"Not implemented yet: {exc}\n")
         return EXIT_CODES["optional_capability_missing"]
+    except (FileNotFoundError, ContractValidationError, ValueError) as exc:
+        return _emit_command_error(exc)
 
 
 def _cmd_review(args: argparse.Namespace) -> int:
@@ -191,6 +201,8 @@ def _cmd_review(args: argparse.Namespace) -> int:
     except NotImplementedError as exc:
         sys.stderr.write(f"Not implemented yet: {exc}\n")
         return EXIT_CODES["optional_capability_missing"]
+    except (FileNotFoundError, ContractValidationError, ValueError) as exc:
+        return _emit_command_error(exc)
     return EXIT_CODES["invalid_arguments"]
 
 
@@ -214,6 +226,8 @@ def _cmd_export(args: argparse.Namespace) -> int:
     except NotImplementedError as exc:
         sys.stderr.write(f"Not implemented yet: {exc}\n")
         return EXIT_CODES["optional_capability_missing"]
+    except (FileNotFoundError, ContractValidationError, ValueError) as exc:
+        return _emit_command_error(exc)
 
 
 def _cmd_verify(args: argparse.Namespace) -> int:
@@ -234,6 +248,8 @@ def _cmd_verify(args: argparse.Namespace) -> int:
     except NotImplementedError as exc:
         sys.stderr.write(f"Not implemented yet: {exc}\n")
         return EXIT_CODES["optional_capability_missing"]
+    except (FileNotFoundError, ContractValidationError, ValueError) as exc:
+        return _emit_command_error(exc)
 
 
 def _cmd_evaluate(args: argparse.Namespace) -> int:
@@ -258,6 +274,31 @@ def _cmd_evaluate(args: argparse.Namespace) -> int:
     except NotImplementedError as exc:
         sys.stderr.write(f"Not implemented yet: {exc}\n")
         return EXIT_CODES["optional_capability_missing"]
+    except (FileNotFoundError, ContractValidationError, ValueError) as exc:
+        return _emit_command_error(exc)
+
+
+def _cmd_explore(args: argparse.Namespace) -> int:
+    try:
+        from enterprise_i18n_ops.explore.runner import explore_target
+
+        result = explore_target(
+            url=args.url,
+            workspace=Path(args.workspace),
+            depth=args.depth,
+            headless=args.headless,
+        )
+        _emit_json(result)
+        return (
+            EXIT_CODES["policy_or_authorization_blocked"]
+            if result.get("status") in {"blocked", "skipped"}
+            else EXIT_CODES["success"]
+        )
+    except ImportError as exc:
+        sys.stderr.write(f"Optional capability missing: {exc}\n")
+        return EXIT_CODES["optional_capability_missing"]
+    except (FileNotFoundError, ContractValidationError, ValueError) as exc:
+        return _emit_command_error(exc)
 
 
 def build_parser() -> argparse.ArgumentParser:
@@ -280,6 +321,15 @@ def build_parser() -> argparse.ArgumentParser:
     p_san.add_argument("target_dir", help="Directory to scan.")
     p_san.add_argument("--blocklist-file", help="Optional newline-delimited forbidden terms file.")
     p_san.set_defaults(func=_cmd_sanitize_check)
+
+    p_explore = sub.add_parser("explore", help="Discover rendered bilingual UI under read-only policy guardrails.")
+    p_explore.add_argument("--url", required=True)
+    p_explore.add_argument("--workspace", required=True)
+    p_explore.add_argument("--depth", default="standard", choices=["quick", "standard", "thorough"])
+    head_mode = p_explore.add_mutually_exclusive_group()
+    head_mode.add_argument("--headless", dest="headless", action="store_true", default=True)
+    head_mode.add_argument("--headed", dest="headless", action="store_false")
+    p_explore.set_defaults(func=_cmd_explore)
 
     p_run = sub.add_parser("run", help="Manage external audit workspace checkpoints.")
     run_sub = p_run.add_subparsers(dest="run_action", required=True)
