@@ -2,35 +2,31 @@
 
 [English Documentation (README.md)](README.md)
 
-面向**复杂 Web 系统**的**行业无关、零外部 Skill 依赖、自包含 Agent Skill + 确定性 Python CLI / RAG 工具链**，用于完成「中英双语界面全量盘点 → 自带术语库（BYOG）混合检索审译 → 6 列着色防公式注入 Excel 交付与回读验收」端到端闭环。
+`lingual-audit` 是一个面向复杂 Web 系统的双语界面审译工具，包含一套自包含的 Agent Skill 和对应的 Python 命令行工具。它可以把运行中系统的中英文界面词条盘点出来，用你自己的术语库做本地混合检索和出处核验，最后导出带颜色标注、防公式注入的 6 列 Excel 审查表。
 
-> **为什么做这个项目？**
-> 复杂 Web 系统（涵盖金融、医疗、制造、SaaS、电商、开发者平台等任意领域）往往在数百个页面中沉淀了数千条错译、漏译、裸露 i18n Key 或跨菜单译名漂移的界面词条。纯人工盘点与校对周期动辄数月；而直接让大模型临时翻阅参考 PDF 又面临漏召回、出处幻觉、同词异译漂移以及误触发前端自动保存等工程风险。`lingual-audit` 将**概率性 LLM 语义审译**与**确定性采集、检索、出处核验和 Excel 回读**彻底解耦。
+金融、医疗、制造、SaaS、电商、开发者平台这类复杂 Web 系统，跑久了通常会在几百个页面里攒下几千条错译、漏译、裸露 i18n Key 或跨菜单译名不统一的问题。靠人一页页翻查往往要花好几周；直接把几本参考 PDF 丢给大模型看，又容易漏掉短词、编造出处、前后菜单译法打架，甚至在点页面时误触表单自动保存。`lingual-audit` 把这两件事拆开了：语言判断交给大模型，页面采集、本地检索、出处校验和 Excel 回读全部交给确定性脚本来做。
 
----
+## 主要功能
 
-## 核心特性
+- **自带术语库（BYOG），不限行业**：初始化工作区时会生成空白术语库目录（`corpus/raw/`、`corpus/manifest.json`、`corpus/authority_policy.json`）。无论什么行业，把 `PDF`、`HTML`、`XLSX` 或 `CSV` 格式的术语表和规范放进去就能直接跑，不需要改代码。哪怕术语库留空也能正常运行，检索会返回 `no_authoritative_hit=True`，不会报错，也不会编出处。
+- **开箱即用的 Agent Skill**：仓库内置 [SKILL.md](SKILL.md)、[references/](references) 和 [templates/](templates)，在 Claude Code、Codex、Antigravity、WorkBuddy 中可以直接用，没有把第三方 Skill 打包进仓库。
+- **三档探索深度与网络隔离**：支持 `quick`、`standard`、`thorough` 三种模式。`thorough` 模式下会往空输入框填合成测试数据来触发前端校验提示，但所有探测都在独立的 Playwright Context 里执行，同时禁用 Service Worker 并在整个探测周期内拦截全部 HTTP 和 WebSocket 出站请求，探测结束直接销毁该 Context，连延迟防抖的自动保存请求也发不出去。如果当前宿主不支持网络拦截，会自动跳过输入探测。
+- **单文件 SQLite FTS5 检索与适用性优先过滤**：内置 `pdfplumber`、`BeautifulSoup`、`openpyxl` 和 `csv` 解析器，同时保存原文和 NFKC 归一化文本（顺带修掉 PDF 里常见的康熙部首偏旁，比如 `⼿`、`⽅`）。索引层把短缩写精确匹配和 CJK 二元组检索分开建通道，检索时先按领域、地区、目标语言变体和双语性质过滤适用范围，再按配置排序，避免用英文单语解释硬套中文译名。
+- **6 列着色 Excel 交付与自动回读**：按功能菜单分 Sheet 输出 `页面层级 | 系统英文 | 系统中文 | AI 建议中文 | 比对结论 | 修改理由与业务依据`。7 种结论状态各自配了浅底色方便筛选，只要结论不是`保留`就必须写清业务理由和出处。所有单元格强制写为纯文本，像 `=SpotRate + Margin` 这类内容不会变成 Excel 公式，导出后还会自动用 `openpyxl` 回读核对内容和 SHA-256 哈希。
 
-- **彻底行业无关（BYOG 自带术语库）**：默认初始化空白知识库槽位（`corpus/raw/`、`corpus/manifest.json`、`corpus/authority_policy.json`）。无论什么行业，只需把本领域的 `PDF`、`HTML`、`XLSX`、`CSV` 术语表或规范丢进去即可运行，零代码改动；空库状态下也能优雅降级（`no_authoritative_hit=True`），不报错、不编造出处。
-- **零 Vendor 自包含 Agent Skill**：原生 [SKILL.md](SKILL.md) + [references/](references) + [templates/](templates) 吸收了通用页面探索与文件化断点续跑思路，无需安装或 vendor 第三方 Skill，跨宿主（Claude Code / Codex / Antigravity / WorkBuddy）开箱即用。
-- **分层探索深度 + `thorough` 网络阻断安全护栏**：支持 `quick` / `standard` / `thorough` 三档。在 `thorough` 模式下允许填入合成测试数据以触发前端校验报错，但强制在独立隔离 Playwright Context 中禁用 Service Worker 并**全程阻断 HTTP / WebSocket 出站请求直至销毁该 Context**（连延迟防抖自动保存也彻底拦死）；无法建立网络隔离的宿主自动跳过输入探测。
-- **单文件 SQLite FTS5 + 适用性优先仲裁**：用 `pdfplumber` / `BeautifulSoup` / `openpyxl` / `csv` 解析多格式语料，保留原文与 NFKC 归一化双视图（自动修复常见 PDF 中的康熙部首偏旁如 `⼿`/`⽅`），建立精确短缩写通道 + CJK 二元组索引，先按「领域 / 地区 / 目标语言变体 / 双语性质」筛选适用性，再按可配置策略排序，严禁英文单语定义冒充中文译名。
-- **6 列着色防公式注入 Excel 交付与自动回读**：按功能菜单分 Sheet 输出 `页面层级 | 系统英文 | 系统中文 | AI 建议中文 | 比对结论 | 修改理由与业务依据`，7 类结论状态各有柔和底色区分，非`保留`项强制填写业务向理由与出处，所有文本单元严格防公式注入（`=SpotRate + Margin` 等原样保留为纯文本），并自动执行 `openpyxl` 回读校验与 SHA-256 哈希核对。
+## 几个关键取舍
 
----
+**先筛适用范围，再比来源优先级。**
+多地区系统里，港台译名（`zh-HK`）和内地标准（`zh-CN`）很多时候只是地区习惯不同，不算错译；英文单语的国际标准能解释概念，但不能拿来给中文界面译名背书。先按领域、地区、语言变体和双语性质筛一遍，再在同一适用范围内按 `authority_policy.json` 裁决，遇到真实冲突直接标成`来源冲突`交给业务方拍板。
 
-## 产品设计思考与关键取舍（Design Decisions & Trade-offs）
+**先用精确词表 + SQLite FTS5 + CJK 二元组，向量检索做成可选消融项。**
+Web 界面里的词条大多很短，比如两三个字母的缩写或者两个字的中文术语。纯向量检索在短词上容易跑偏，SQLite 自带的 `trigram` 分词器也匹配不了少于 3 个字符的词。单文件 SQLite 加上精确通道和二元组索引，不依赖外部服务和 API Key，本地离线就能稳定复现结果。仓库里同时预留了 RRF 向量融合接口，需要的话可以在黄金集上跑三组消融对比（裸读 vs 词表+FTS vs 混合向量），看数据再决定是否开启。
 
-1. **为什么先做“适用性筛选”，而不是给所有机构排一个全局优先级？**
-   在多地区复杂 Web 系统中，港台译名（`zh-HK`）与内地规范（`zh-CN`）往往属于合法地区变体而非错误；英文单语国际标准只能解释概念含义，不能用来强行背书中文译名。先按领域、地区、语言变体和双语性质过滤，再在同适用范围内按 `authority_policy.json` 裁决，既严谨又能把真实冲突透明交给业务方拍板。
-2. **为什么首期用“精确词条 + SQLite FTS5 + CJK 二元组”，再通过消融评测决定是否引入向量？**
-   Web 界面词条高度偏短（如 2–3 字母缩写或 2 字中文术语），纯向量召回易漂移，且 SQLite 内置 `trigram` 分词器无法匹配不足 3 字符的查询。单文件 SQLite + FTS5 + NFKC/二元组方案零运维、零 API 成本、100% 离线可复现，同时预留了 RRF 向量融合接口，方便在黄金集上做三组消融实验（裸读 vs 词条+FTS vs 混合向量）用真实数据说话。
-3. **为什么 `thorough` 填入测试数据必须上独立隔离 Context 网络阻断？**
-   单靠“不点提交按钮”不足以证明安全——大量现代 Web 表单会在 `input`、`change`、`blur` 甚至延迟防抖定时器中发 `POST` 自动保存。在独立隔离 Context 内禁用 Service Worker、全程阻断 HTTP/WebSocket 并在探测结束后直接销毁该 Context，才能在物理层保证零后端写入。
-4. **为什么选择 6 列着色 Excel + 同包 JSON 清单？**
-   业务方复核需要一眼看清页面层级、用颜色快速筛选待改项、并读懂从业务出发的修改理由；工程验收则需要行级 SHA-256 与可机器核验的出处 ID。两者分离，既保持表格清爽可读，又不丢失任何可追溯证据。
+**`thorough` 模式输入测试数据时，必须上独立 Context 断网。**
+只靠“不点提交按钮”并不安全，现在很多 Web 表单在 `input`、`change`、`blur` 甚至防抖定时器里就会发 `POST` 自动保存。在独立隔离的 Context 里禁掉 Service Worker、全程拦住 HTTP/WebSocket 请求、测完立刻销毁 Context，才能确保不会往后端写脏数据。
 
----
+**把人工看审的 Excel 和机器校验的 JSON 分开。**
+业务同学看表时，希望左边一眼看清页面层级、中间靠颜色筛出待改项、右边直接看到业务角度的修改理由；工程验收则需要行级 SHA-256 哈希和可核验的出处 ID。Excel 保持 6 列干净好读，完整的结构化出处和校验信息放在同目录的 `review.json` 和 `delivery-manifest.json` 里，两边互不干扰。
 
 ## 快速上手
 
@@ -59,8 +55,6 @@ python3 -m venv --system-site-packages .venv
 .venv/bin/pytest -v -p no:anyio
 ```
 
----
-
 ## 致谢
 
-本项目的页面探索与文件化续跑设计受 `app-docs` 与 `planning-with-files` 启发，但未将任何第三方 Skill 打包进本仓库；所有规范、模板与工具链均基于 MIT 协议独立实现。
+页面探索和文件化续跑的思路参考了 `app-docs` 与 `planning-with-files`，本仓库未打包任何第三方 Skill，所有规范、模板和工具链均按 MIT 协议独立实现。

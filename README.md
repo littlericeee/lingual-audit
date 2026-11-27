@@ -2,23 +2,19 @@
 
 [中文说明 (README_CN.md)](README_CN.md)
 
-A **domain-agnostic**, self-contained **Agent Skill + deterministic Python CLI/RAG toolchain** for bilingual UI inventory, terminology standardization, and auditable Excel delivery on **complex web systems**.
+`lingual-audit` is a domain-agnostic Agent Skill and Python CLI for auditing bilingual UI copy on complex web systems. It collects visible English and target-language strings from a running web app, checks them against your own glossaries and standards using local hybrid retrieval, and exports a color-coded Excel workbook with verified citations.
 
-> **Why this exists:** Complex web applications across any domain (FinTech, Healthcare, Manufacturing, SaaS, E-commerce, Developer Tools, etc.) often accumulate thousands of inconsistent, mistranslated, or raw-key UI strings across hundreds of views. Manual bilingual audits take weeks of effort, while naive "let an LLM read reference PDFs" workflows suffer from missed recalls, fabricated citations, cross-menu drift, and unsafe form mutations. `lingual-audit` separates **probabilistic LLM judgment** from **deterministic UI collection, hybrid retrieval, citation verification, and Excel read-back**.
+Complex web apps in finance, healthcare, manufacturing, SaaS, e-commerce, or developer tooling tend to accumulate thousands of inconsistent labels, mistranslations, and raw i18n keys across hundreds of views. Auditing them by hand takes weeks. Handing reference PDFs straight to an LLM is faster, but models miss short terms, invent citations, drift across menus, and can accidentally trigger auto-save requests while clicking around forms. `lingual-audit` splits the job in two: the LLM handles language judgment, while deterministic Python tools handle crawling, retrieval, citation checks, and Excel export.
 
----
+## What it does
 
-## Key Capabilities
+- **Bring your own glossary (BYOG)**: The workspace starts with an empty knowledge base slot (`corpus/raw/`, `corpus/manifest.json`, `corpus/authority_policy.json`). Drop in your own `PDF`, `HTML`, `XLSX`, or `CSV` glossaries and standards for any industry without editing code. If the corpus is empty, retrieval still runs and marks items with `no_authoritative_hit=True` instead of failing or guessing sources.
+- **Self-contained Agent Skill**: [SKILL.md](SKILL.md), [references/](references), and [templates/](templates) work directly in Claude Code, Codex, Antigravity, and WorkBuddy. No third-party skills are vendored into this repo.
+- **Three exploration depths with network isolation**: Choose `quick`, `standard`, or `thorough`. In `thorough` mode, entering synthetic test strings to trigger client-side validation messages runs inside a dedicated Playwright context with `service_workers="block"` and all outbound HTTP and WebSocket traffic blocked until that context is destroyed. Even delayed auto-save timers cannot reach the backend.
+- **Local SQLite FTS5 retrieval with applicability screening**: Parsers extract both verbatim and NFKC-normalized text from multi-format documents, build an exact short-acronym channel (`FX`, `IRS`, `BIC`) alongside a CJK bigram index, and filter sources by domain, region, and target locale before comparing normative precedence.
+- **Color-coded, formula-safe Excel export**: Exports one worksheet per menu (`页面层级 | 系统英文 | 系统中文 | AI 建议中文 | 比对结论 | 修改理由与业务依据`), with distinct fill colors for each verdict, a required business-focused rationale for every non-`保留` row, plain-text formula protection, and automatic `openpyxl` read-back checks.
 
-- **Bring-Your-Own-Glossary (BYOG) — Any Domain, Zero Hardcoding**: Ships with an empty default knowledge base slot (`corpus/raw/`, `corpus/manifest.json`, `corpus/authority_policy.json`). Drop any domain's `PDF`, `HTML`, `XLSX`, or `CSV` glossaries and standards in—no code changes required. Even an empty corpus degrades gracefully (`no_authoritative_hit=True`).
-- **Zero-Vendor Self-Contained Agent Skill**: Native [SKILL.md](SKILL.md) + [references/](references) + [templates/](templates) work across Claude Code, Codex, Antigravity, and WorkBuddy without vendoring third-party skills.
-- **Policy-Constrained Exploration with `thorough` Network Isolation**: Supports `quick` / `standard` / `thorough` depths. In `thorough` mode, synthetic test-data probing to surface client-side validation messages runs inside a dedicated isolated Playwright context (`service_workers="block"`, HTTP + WebSocket outbound permanently blocked until the probe context is destroyed—blocking even delayed debounced auto-save timers).
-- **Single-File SQLite FTS5 + Applicability-First Arbitration**: Parses multi-format corpora into dual verbatim/NFKC-normalized views with CJK bigram indexing and exact short-acronym channels (`FX`, `IRS`, `BIC`), screening sources by **domain/region/locale applicability first** before applying normative precedence.
-- **6-Column Color-Coded, Formula-Safe Excel Delivery**: Generates per-menu worksheets (`页面层级 | 系统英文 | 系统中文 | AI 建议中文 | 比对结论 | 修改理由与业务依据`) with distinct verdict fill colors, mandatory business-first rationales for non-`保留` items, formula-injection protection, and automatic `openpyxl` read-back verification.
-
----
-
-## Architecture Overview
+## How it works
 
 ```mermaid
 flowchart TD
@@ -35,35 +31,7 @@ flowchart TD
     K --> L["Automatic openpyxl Read-Back Verification"]
 ```
 
----
-
-## Product Design Decisions & Trade-offs
-
-1. **Why Applicability Screening First instead of a Global Agency Ranking?**
-   In multi-region web products, regional terminology (e.g., `zh-HK` vs `zh-CN`) is often a legitimate regional variant rather than an error, and an English-only international standard explains concept meaning without authorizing a target-language UI label. Screening by `(domain, region, target_locale, language_scope)` before comparing `normative_precedence` prevents false overrides and keeps real conflicts transparent.
-2. **Why Exact Glossary + SQLite FTS5 + CJK Bigrams BEFORE Dense Vectors?**
-   Web UI labels are short (often 2–3 character acronyms or 2-character Chinese terms where naive embeddings drift and SQLite's built-in `trigram` tokenizer cannot match <3 characters). A single-file SQLite + FTS5 + NFKC/CJK-bigram engine runs with **zero external daemons, zero API keys, and deterministic tests**, while leaving an extensible RRF vector hook evaluated strictly via 3-arm Golden Set ablations.
-3. **Why Dedicated Isolated Playwright Contexts for `thorough` Synthetic Input Probing?**
-   "Not clicking Submit" is not a safety proof—modern web forms frequently trigger `POST`/`PUT` auto-save requests on `input`, `change`, `blur`, or debounced timers. Keeping HTTP and WebSocket blocking active for the entire probe context and destroying that context immediately afterwards guarantees zero backend writes; hosts without network isolation automatically skip synthetic probes.
-4. **Why 6-Column Color-Coded Excel + Sibling JSON Manifests?**
-   Reviewers want immediate visual triage (UI hierarchy path on the left, color-coded verdict pill, and business-first rationale on the right), while engineering verification needs immutable SHA-256 provenance and row hashes. Keeping Excel clean and formula-safe while storing full structured citations in `review.json` / `delivery-manifest.json` satisfies both audiences.
-
----
-
-## 6-Column Excel Output Specification
-
-| Column | Header | Purpose |
-|---|---|---|
-| A | `页面层级` | Full UI hierarchy (`Menu > Page State > Section > Control`) |
-| B | `系统英文` | Verbatim observed English UI text (explicit text cell, formula-safe) |
-| C | `系统中文` | Verbatim observed target-language UI text |
-| D | `AI 建议中文` | Suggested translation (blank when `保留` or uncertain) |
-| E | `比对结论` | Color-coded verdict (`保留`, `建议修改`, `缺译`, `来源冲突`, `单语限制`, `待业务确认`, `待核对`) |
-| F | `修改理由与业务依据` | Business-first rationale with brief provenance tag (required whenever verdict ≠ `保留`) |
-
----
-
-## Quick Start
+## Quick start
 
 ```bash
 # 1. Create virtualenv & install
@@ -90,8 +58,31 @@ python3 -m venv --system-site-packages .venv
 .venv/bin/pytest -v -p no:anyio
 ```
 
----
+## Excel output format
+
+| Column | Header | Purpose |
+|---|---|---|
+| A | `页面层级` | Full UI hierarchy (`Menu > Page State > Section > Control`) |
+| B | `系统英文` | Verbatim observed English UI text (explicit text cell, formula-safe) |
+| C | `系统中文` | Verbatim observed target-language UI text |
+| D | `AI 建议中文` | Suggested translation (blank when `保留` or uncertain) |
+| E | `比对结论` | Color-coded verdict (`保留`, `建议修改`, `缺译`, `来源冲突`, `单语限制`, `待业务确认`, `待核对`) |
+| F | `修改理由与业务依据` | Business-first rationale with brief provenance tag (required whenever verdict ≠ `保留`) |
+
+## Design trade-offs
+
+**Screen for applicability before ranking authority.**
+In multi-region products, a `zh-HK` label and a `zh-CN` standard are often valid regional variants, and an English-only international standard explains what a concept means without authorizing a Chinese UI label. Checking `(domain, region, target_locale, language_scope)` before comparing `normative_precedence` avoids false overrides and keeps real source conflicts visible.
+
+**Start with exact glossaries, SQLite FTS5, and CJK bigrams before adding dense vectors.**
+UI strings are short: 2 to 3 letter acronyms or two-character Chinese terms. Embeddings drift on short labels, and SQLite's built-in `trigram` tokenizer cannot match queries shorter than three characters. A single-file SQLite index with exact channels and CJK bigrams runs offline with no external services or API keys, and produces repeatable test results. An RRF vector hook is included for teams that want to benchmark hybrid embeddings against a Golden Set.
+
+**Isolate `thorough` input probes in a throwaway Playwright context.**
+Skipping the Submit button does not prevent backend writes. Modern web forms routinely send `POST` or `PUT` auto-save requests on `input`, `change`, `blur`, or debounced timers. Blocking HTTP and WebSocket traffic for the entire lifetime of an isolated probe context and destroying that context afterward prevents any outbound write. Hosts without request interception skip synthetic input probes automatically.
+
+**Separate the reviewer spreadsheet from the verification manifest.**
+Reviewers want a clean sheet they can scan by color, with the UI path on the left and a clear business reason on the right. Engineering verification needs SHA-256 hashes and structured citation IDs. Putting human-readable decisions in the 6-column workbook and machine-checked provenance in `review.json` and `delivery-manifest.json` keeps both files clean.
 
 ## Acknowledgments
 
-Inspired by route-discovery conventions from `app-docs` and disk-backed session checkpointing from `planning-with-files`. Neither skill is vendored into this repository; all exploration, checkpointing, retrieval, and delivery protocols are implemented natively under MIT license.
+Inspired by route-discovery conventions from `app-docs` and disk-backed session checkpointing from `planning-with-files`. Neither skill is vendored into this repository; all exploration, checkpointing, retrieval, and delivery code is implemented here under the MIT license.
