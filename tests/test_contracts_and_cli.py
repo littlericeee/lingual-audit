@@ -342,4 +342,5 @@ def test_cli_phase0_commands(tmp_path: Path, capsys) -> None:
     st_out = json.loads(capsys.readouterr().out)
     assert st_out["run_id"] == "RUN-20261127-0002"
     assert st_out["industry_label"] == "healthcare_ehr"
-    assert len(VERDICT_STYLES) == 7
+    assert len(VERDICT_STYLES) == 6
+    assert "待" + "业务确认" not in VERDICT_STYLES

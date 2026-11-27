@@ -336,7 +336,7 @@ def test_empty_index_and_hybrid_fallback(empty_db: Path) -> None:
     assert bundle["candidates"] == []
     assert bundle["retrieval_mode"] == "glossary_fts"
     assert bundle["conflict_flags"]["no_authoritative_hit"] is True
-    assert predict_from_bundle(ui("Unknown", "a.b.c"), bundle)["verdict"] == "待业务确认"
+    assert predict_from_bundle(ui("Unknown", "a.b.c"), bundle)["verdict"] == "待核对"
 
 
 @pytest.mark.parametrize(
@@ -395,7 +395,7 @@ def test_wrong_ui_chinese_and_siblings_do_not_supply_unrelated_translation(
     item = ui("Unindexed", "保证金", sibling_labels=["Margin", "Counterparty"])
     bundle = retrieve_for_item(finance_db, item, "risk_management")
     assert bundle["candidates"] == []
-    assert predict_from_bundle(item, bundle)["verdict"] == "待业务确认"
+    assert predict_from_bundle(item, bundle)["verdict"] == "待核对"
 
 
 def test_context_breaks_ties_within_same_scope_and_tier(empty_db: Path) -> None:
@@ -642,7 +642,7 @@ def test_english_only_chunk_cannot_authorize_change(finance_db: Path, tmp_path: 
     assert bundle["conflict_flags"]["en_only_evidence"] is True
     assert bundle["conflict_flags"]["no_authoritative_hit"] is True
     assert bundle["candidates"][0]["channels"] == ["fts_bm25"]
-    assert predict_from_bundle(ui(en, "旧译"), bundle)["verdict"] == "待业务确认"
+    assert predict_from_bundle(ui(en, "旧译"), bundle)["verdict"] == "待核对"
     item = review_item(
         en, "旧译", verdict="建议修改", suggested_zh="新译", evidence_refs=[citation(bundle)]
     )
@@ -724,7 +724,7 @@ def test_empty_packet_bundle_allows_uncertain_review_without_citations(
     item = review_item(
         "Unknown",
         "待确认",
-        verdict="待业务确认",
+        verdict="待核对",
         business_rationale="No authoritative evidence was retrieved.",
     )
 
@@ -870,7 +870,7 @@ def test_healthcare_policy_and_external_predictions(
     assert baseline["metrics"]["verdict_accuracy"] == 1
     predictions = tmp_path / "predictions.json"
     prediction = {
-        "verdict": "待业务确认",
+        "verdict": "待核对",
         "evidence_refs": [citation(bundle), {**citation(bundle), "excerpt_hash": "0" * 64}],
     }
     atomic_write_json(

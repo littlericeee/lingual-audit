@@ -68,6 +68,8 @@ def default_authority_policy(
             "GLOBAL": ["GLOBAL"],
         },
         "domain_hierarchy": {},
+        "web_domain_tiers": {},
+        "web_default_normative_level": "reference_material",
         "conflict_rules": {
             "preserve_regional_variants": True,
             "forbid_en_only_as_target_translation": True,

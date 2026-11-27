@@ -38,7 +38,7 @@ _METRICS = (
     "abstention_precision",
     "false_abstention_rate",
 )
-_ABSTENTIONS = {"待业务确认", "单语限制", "待核对"}
+_ABSTENTIONS = {"单语限制", "待核对"}
 
 
 class Embedder(Protocol):

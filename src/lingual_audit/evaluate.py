@@ -25,7 +25,7 @@ from lingual_audit.review import lookup_citation
 from lingual_audit.state import utc_now_iso
 
 _RAW_KEY = re.compile(r"[a-z_][a-z0-9_-]*(?:\.[a-z0-9_-]+){2,}", re.IGNORECASE | re.ASCII)
-_ABSTENTIONS = {"待业务确认", "单语限制", "待核对"}
+_ABSTENTIONS = {"单语限制", "待核对"}
 _CITATION_FIELDS = ("evidence_id", "doc_id", "doc_version", "excerpt_hash")
 
 
@@ -48,7 +48,7 @@ def predict_from_bundle(item: dict[str, Any], bundle: dict[str, Any]) -> dict[st
         or flags["en_only_evidence"]
         or status in {"not_observed", "single_language_embedded", "pairing_pending"}
     ):
-        verdict, citations = "待业务确认", bundle["candidates"][:1]
+        verdict, citations = "待核对", bundle["candidates"][:1]
     elif (
         status == "missing_or_raw_key"
         or _RAW_KEY.fullmatch(observed)

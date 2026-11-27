@@ -30,7 +30,6 @@ _EXPECTED_FILLS = {
     "缺译": "FFEBEE",
     "来源冲突": "FFF3E0",
     "单语限制": "ECEFF1",
-    "待业务确认": "E3F2FD",
     "待核对": "F3E5F5",
 }
 _FORMULA_LIKE_TEXT = ("=SpotRate + Margin", "+BP Spread", "@user", "-Delta", "\t=Note", "\r=Note")
@@ -84,7 +83,12 @@ def paths(tmp_path: Path) -> tuple[Path, Path, Path, Path]:
             "suggested_zh": None if verdict == "保留" else "建议用语",
             "verdict": verdict,
             "business_rationale": "" if verdict == "保留" else "示例术语的业务依据",
-            "evidence_refs": [],
+            "evidence_refs": ([{
+                "evidence_id": "GLS-DEMO-FIELD",
+                "doc_id": "DOC-DEMO-GLOSSARY",
+                "doc_version": "1.0",
+                "excerpt_hash": "a" * 64,
+            }] if verdict == "建议修改" else []),
             "human_review_status": "pending",
         }
         for index, verdict in enumerate(_EXPECTED_FILLS, start=1)
@@ -116,7 +120,7 @@ def test_exports_six_columns_and_all_verdicts(paths: tuple[Path, Path, Path, Pat
     assert manifest["workbook_rel_path"] == "delivery/workbook.xlsx"
     assert manifest["workbook_sha256"] == sha256_file(workbook_path)
     assert [sheet["menu_id"] for sheet in manifest["sheets"]] == ["MN-0002", "MN-0003", "MN-0004"]
-    assert [sheet["row_count"] for sheet in manifest["sheets"]] == [6, 1, 0]
+    assert [sheet["row_count"] for sheet in manifest["sheets"]] == [5, 1, 0]
 
     workbook = load_workbook(workbook_path, data_only=False)
     assert workbook.sheetnames == ["示例功能", "直接评审分组", "空功能"]
@@ -145,7 +149,7 @@ def test_exports_six_columns_and_all_verdicts(paths: tuple[Path, Path, Path, Pat
     workbook.close()
 
     assert verify_delivery(workbook_path, manifest_path, review_path) == {
-        "verified": True, "error_count": 0, "errors": [], "checked_sheets": 3, "checked_rows": 7
+        "verified": True, "error_count": 0, "errors": [], "checked_sheets": 3, "checked_rows": 6
     }
 
 
@@ -153,9 +157,11 @@ def test_formula_like_ui_strings_remain_verbatim(paths: tuple[Path, Path, Path, 
     _, review_path, workbook_path, manifest_path = paths
     export_workbook(*paths)
     workbook = load_workbook(workbook_path, data_only=False)
-    for row_number, expected in enumerate(_FORMULA_LIKE_TEXT, start=2):
+    for row_number, expected in enumerate(_FORMULA_LIKE_TEXT[:-1], start=2):
         cell = workbook["示例功能"].cell(row_number, 2)
         assert (cell.value, cell.data_type, cell.number_format) == (expected, "s", "@")
+    cell = workbook["直接评审分组"].cell(2, 2)
+    assert (cell.value, cell.data_type, cell.number_format) == (_FORMULA_LIKE_TEXT[-1], "s", "@")
     workbook.close()
     with ZipFile(workbook_path) as archive:
         assert b'<f' not in archive.read("xl/worksheets/sheet1.xml")
@@ -187,7 +193,7 @@ def test_titles_and_optional_summary_sheets(paths: tuple[Path, Path, Path, Path]
     assert len({name.casefold() for name in workbook.sheetnames}) == len(workbook.sheetnames)
     assert all(0 < len(name) <= 31 for name in workbook.sheetnames)
     assert list(workbook["_Summary"].values)[1] == ("结论", "保留", "1")
-    assert list(workbook["_Summary"].values)[8] == ("菜单", "示例功能", "6")
+    assert list(workbook["_Summary"].values)[7] == ("菜单", "示例功能", "5")
     finding = workbook["_Consistency"]
     assert list(finding.values)[1] == (
         "demo_field", "general_ui", '["示例字段", "示例用语"]',
