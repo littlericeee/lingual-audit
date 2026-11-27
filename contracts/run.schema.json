@@ -1,0 +1,77 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lingual-audit.local/contracts/run.schema.json",
+  "title": "Run State and Checkpoint Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "run_id",
+    "created_at",
+    "updated_at",
+    "phase",
+    "depth",
+    "target_region",
+    "target_locale",
+    "policy_version",
+    "scope",
+    "task_units"
+  ],
+  "properties": {
+    "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+    "run_id": { "$ref": "common.schema.json#/$defs/run_id" },
+    "created_at": { "$ref": "common.schema.json#/$defs/iso_datetime" },
+    "updated_at": { "$ref": "common.schema.json#/$defs/iso_datetime" },
+    "phase": { "$ref": "common.schema.json#/$defs/run_phase" },
+    "depth": { "$ref": "common.schema.json#/$defs/exploration_depth" },
+    "target_region": { "$ref": "common.schema.json#/$defs/region_scope" },
+    "target_locale": { "$ref": "common.schema.json#/$defs/locale_code" },
+    "policy_version": { "type": "string", "minLength": 1 },
+    "corpus_snapshot_hash": {
+      "oneOf": [
+        { "$ref": "common.schema.json#/$defs/sha256" },
+        { "type": "null" }
+      ]
+    },
+    "inventory_snapshot_hash": {
+      "oneOf": [
+        { "$ref": "common.schema.json#/$defs/sha256" },
+        { "type": "null" }
+      ]
+    },
+    "scope": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["app_label", "declared_menus", "allow_synthetic_input"],
+      "properties": {
+        "app_label": { "type": "string", "minLength": 1 },
+        "industry_label": { "type": "string" },
+        "role_alias": { "type": "string" },
+        "declared_menus": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "allow_synthetic_input": { "type": "boolean" },
+        "network_isolation_required": { "type": "boolean", "default": true }
+      }
+    },
+    "task_units": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["unit_id", "menu_id", "page_id", "language", "status"],
+        "properties": {
+          "unit_id": { "type": "string", "minLength": 1 },
+          "menu_id": { "$ref": "common.schema.json#/$defs/menu_id" },
+          "page_id": { "$ref": "common.schema.json#/$defs/page_id" },
+          "state_id": { "$ref": "common.schema.json#/$defs/state_id" },
+          "language": { "type": "string", "enum": ["en", "zh"] },
+          "status": { "$ref": "common.schema.json#/$defs/task_unit_status" },
+          "blocker_reason": { "type": ["string", "null"] },
+          "updated_at": { "$ref": "common.schema.json#/$defs/iso_datetime" }
+        }
+      }
+    }
+  }
+}

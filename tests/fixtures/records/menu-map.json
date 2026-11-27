@@ -1,0 +1,61 @@
+{
+  "contract_version": "1.0.0",
+  "artifact_kind": "menu_map",
+  "observed_at": "2026-11-27T00:00:00Z",
+  "app_version": "demo-1.0.0",
+  "role_alias": "auditor_readonly",
+  "menus": [
+    {
+      "menu_id": "MN-0001",
+      "parent_menu_id": null,
+      "is_group": true,
+      "hierarchy_en": ["FX Trading"],
+      "hierarchy_zh": ["外汇交易"],
+      "route_or_entry": null,
+      "page_id": null,
+      "page_record_path": null,
+      "domain_tag": "fx",
+      "coverage_status": "fully_inspected",
+      "blocker_reason": null
+    },
+    {
+      "menu_id": "MN-0002",
+      "parent_menu_id": "MN-0001",
+      "is_group": false,
+      "hierarchy_en": ["FX Trading", "Spot Deal Entry"],
+      "hierarchy_zh": ["外汇交易", "即期簿记"],
+      "route_or_entry": "#/fx/spot",
+      "page_id": "PG-000001",
+      "page_record_path": "pages/PG-000001.json",
+      "domain_tag": "fx",
+      "coverage_status": "fully_inspected",
+      "blocker_reason": null
+    },
+    {
+      "menu_id": "MN-0003",
+      "parent_menu_id": null,
+      "is_group": true,
+      "hierarchy_en": ["Risk Management"],
+      "hierarchy_zh": ["风险管理"],
+      "route_or_entry": null,
+      "page_id": null,
+      "page_record_path": null,
+      "domain_tag": "risk_management",
+      "coverage_status": "fully_inspected",
+      "blocker_reason": null
+    },
+    {
+      "menu_id": "MN-0004",
+      "parent_menu_id": "MN-0003",
+      "is_group": false,
+      "hierarchy_en": ["Risk Management", "Collateral & Netting"],
+      "hierarchy_zh": ["风险管理", "授信与保证金"],
+      "route_or_entry": "#/risk/collateral",
+      "page_id": "PG-000002",
+      "page_record_path": "pages/PG-000002.json",
+      "domain_tag": "risk_management",
+      "coverage_status": "fully_inspected",
+      "blocker_reason": null
+    }
+  ]
+}

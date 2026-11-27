@@ -1,0 +1,239 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lingual-audit.local/contracts/common.schema.json",
+  "title": "Common Domain-Agnostic Definitions for lingual-audit",
+  "$defs": {
+    "contract_version": {
+      "type": "string",
+      "const": "1.0.0"
+    },
+    "iso_datetime": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}T[0-9]{2}:[0-9]{2}:[0-9]{2}(?:\\.[0-9]+)?(?:Z|[+-][0-9]{2}:[0-9]{2})$"
+    },
+    "iso_date": {
+      "type": "string",
+      "pattern": "^[0-9]{4}-[0-9]{2}-[0-9]{2}$"
+    },
+    "sha256": {
+      "type": "string",
+      "pattern": "^[a-f0-9]{64}$"
+    },
+    "rel_posix_path": {
+      "type": "string",
+      "minLength": 1,
+      "pattern": "^(?!/)(?!.*\\\\)(?!\\.\\.(?:/|$))(?!.*/\\.\\.(?:/|$))(?!.*//).+$"
+    },
+    "run_id": {
+      "type": "string",
+      "pattern": "^RUN-[0-9]{8}-[0-9]{4,}(?:-[a-z0-9]+)?$"
+    },
+    "menu_id": {
+      "type": "string",
+      "pattern": "^MN-[0-9]{4,}$"
+    },
+    "page_id": {
+      "type": "string",
+      "pattern": "^PG-[0-9]{6,}$"
+    },
+    "state_id": {
+      "type": "string",
+      "pattern": "^ST-[0-9]{6,}$"
+    },
+    "control_id": {
+      "type": "string",
+      "pattern": "^CTL-[0-9]{6,}$"
+    },
+    "item_id": {
+      "type": "string",
+      "pattern": "^UI-[0-9]{6,}$"
+    },
+    "doc_id": {
+      "type": "string",
+      "pattern": "^DOC-[A-Z0-9_-]{3,40}$"
+    },
+    "chunk_id": {
+      "type": "string",
+      "pattern": "^CHK-[A-Z0-9_-]{3,60}$"
+    },
+    "glossary_id": {
+      "type": "string",
+      "pattern": "^GLS-[A-Z0-9_-]{3,60}$"
+    },
+    "concept_id": {
+      "type": "string",
+      "pattern": "^CON-[A-Z0-9_-]{2,60}$"
+    },
+    "exploration_depth": {
+      "type": "string",
+      "enum": ["quick", "standard", "thorough"]
+    },
+    "run_phase": {
+      "type": "string",
+      "enum": [
+        "initialized",
+        "inventorying",
+        "inventory_frozen",
+        "reviewing",
+        "validated",
+        "exported",
+        "verified"
+      ]
+    },
+    "task_unit_status": {
+      "type": "string",
+      "enum": ["pending", "running", "done", "blocked", "skipped"]
+    },
+    "coverage_status": {
+      "type": "string",
+      "enum": [
+        "registered_only",
+        "fully_inspected",
+        "partially_inspected",
+        "blocked"
+      ]
+    },
+    "observation_status": {
+      "type": "string",
+      "enum": [
+        "observed",
+        "missing_or_raw_key",
+        "not_observed",
+        "single_language_embedded",
+        "pairing_pending"
+      ]
+    },
+    "control_type": {
+      "type": "string",
+      "enum": [
+        "menu_item",
+        "page_title",
+        "tab",
+        "section_header",
+        "table_header",
+        "label",
+        "input_placeholder",
+        "button",
+        "dropdown_option",
+        "radio_option",
+        "checkbox_option",
+        "toggle",
+        "validation_message",
+        "tooltip_or_hint",
+        "modal_title",
+        "empty_state",
+        "other"
+      ]
+    },
+    "text_kind": {
+      "type": "string",
+      "enum": [
+        "label",
+        "placeholder",
+        "tooltip",
+        "option",
+        "button",
+        "header",
+        "validation",
+        "status_text",
+        "menu",
+        "other"
+      ]
+    },
+    "locale_code": {
+      "type": "string",
+      "pattern": "^[a-z]{2,3}(?:-[A-Za-z0-9]{2,8})*$",
+      "description": "BCP-47 locale tag such as zh-CN, zh-HK, zh-TW, en-US, ja-JP."
+    },
+    "region_scope": {
+      "type": "string",
+      "pattern": "^[A-Z0-9][A-Z0-9_-]{1,31}$",
+      "description": "Open region/jurisdiction identifier (e.g., CN_MAINLAND, HK, US, EU, GLOBAL)."
+    },
+    "domain_tag": {
+      "type": "string",
+      "pattern": "^[a-z0-9][a-z0-9_-]{0,47}$",
+      "description": "Industry-agnostic domain slug defined by the user's corpus and system (e.g., general_ui, fx, clinical_trial, warehouse_wms, legal_contract)."
+    },
+    "normative_level": {
+      "type": "string",
+      "enum": [
+        "internal_confirmed",
+        "official_regulation",
+        "industry_standard",
+        "international_standard",
+        "domain_glossary",
+        "reference_material"
+      ]
+    },
+    "support_type": {
+      "type": "string",
+      "enum": ["bilingual_equivalent", "concept_definition_only", "usage_example"]
+    },
+    "verdict": {
+      "type": "string",
+      "enum": [
+        "保留",
+        "建议修改",
+        "缺译",
+        "来源冲突",
+        "单语限制",
+        "待核对"
+      ]
+    },
+    "human_review_status": {
+      "type": "string",
+      "enum": ["pending", "approved", "rejected", "modified", "needs_followup"]
+    },
+    "locator": {
+      "oneOf": [
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["format", "physical_page"],
+          "properties": {
+            "format": { "const": "pdf" },
+            "physical_page": { "type": "integer", "minimum": 1 },
+            "printed_page": { "type": ["string", "null"] },
+            "clause": { "type": ["string", "null"] },
+            "block_index": { "type": ["integer", "null"], "minimum": 0 },
+            "bbox": {
+              "type": ["array", "null"],
+              "items": { "type": "number" },
+              "minItems": 4,
+              "maxItems": 4
+            }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["format", "file_sha256", "heading_path"],
+          "properties": {
+            "format": { "const": "html" },
+            "file_sha256": { "$ref": "#/$defs/sha256" },
+            "heading_path": {
+              "type": "array",
+              "items": { "type": "string" }
+            },
+            "anchor": { "type": ["string", "null"] },
+            "table_row": { "type": ["integer", "null"], "minimum": 0 }
+          }
+        },
+        {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["format", "file_sha256", "sheet_name", "cell_range"],
+          "properties": {
+            "format": { "const": "xlsx" },
+            "file_sha256": { "$ref": "#/$defs/sha256" },
+            "sheet_name": { "type": "string", "minLength": 1 },
+            "cell_range": { "type": "string", "minLength": 1 },
+            "field_code": { "type": ["string", "null"] },
+            "row_index": { "type": ["integer", "null"], "minimum": 1 }
+          }
+        }
+      ]
+    }
+  }
+}

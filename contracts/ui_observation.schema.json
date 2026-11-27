@@ -1,0 +1,185 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lingual-audit.local/contracts/ui_observation.schema.json",
+  "title": "UI Observation Contracts (Menu Map & Page Inventory)",
+  "oneOf": [
+    { "$ref": "#/$defs/menu_map" },
+    { "$ref": "#/$defs/page_inventory" }
+  ],
+  "$defs": {
+    "menu_map": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "artifact_kind", "observed_at", "menus"],
+      "properties": {
+        "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+        "artifact_kind": { "const": "menu_map" },
+        "observed_at": { "$ref": "common.schema.json#/$defs/iso_datetime" },
+        "app_version": { "type": "string" },
+        "role_alias": { "type": "string" },
+        "menus": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "menu_id",
+              "parent_menu_id",
+              "is_group",
+              "hierarchy_en",
+              "hierarchy_zh",
+              "domain_tag",
+              "coverage_status"
+            ],
+            "properties": {
+              "menu_id": { "$ref": "common.schema.json#/$defs/menu_id" },
+              "parent_menu_id": {
+                "oneOf": [
+                  { "$ref": "common.schema.json#/$defs/menu_id" },
+                  { "type": "null" }
+                ]
+              },
+              "is_group": { "type": "boolean" },
+              "hierarchy_en": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "type": "string", "minLength": 1 }
+              },
+              "hierarchy_zh": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "route_or_entry": { "type": ["string", "null"] },
+              "page_id": {
+                "oneOf": [
+                  { "$ref": "common.schema.json#/$defs/page_id" },
+                  { "type": "null" }
+                ]
+              },
+              "page_record_path": {
+                "oneOf": [
+                  { "$ref": "common.schema.json#/$defs/rel_posix_path" },
+                  { "type": "null" }
+                ]
+              },
+              "domain_tag": { "$ref": "common.schema.json#/$defs/domain_tag" },
+              "coverage_status": { "$ref": "common.schema.json#/$defs/coverage_status" },
+              "blocker_reason": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    },
+    "page_inventory": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "artifact_kind",
+        "page_id",
+        "menu_id",
+        "menu_hierarchy_zh",
+        "menu_hierarchy_en",
+        "domain_tag",
+        "observed_at",
+        "coverage_status",
+        "items"
+      ],
+      "properties": {
+        "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+        "artifact_kind": { "const": "page_inventory" },
+        "page_id": { "$ref": "common.schema.json#/$defs/page_id" },
+        "menu_id": { "$ref": "common.schema.json#/$defs/menu_id" },
+        "menu_hierarchy_zh": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "menu_hierarchy_en": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "domain_tag": { "$ref": "common.schema.json#/$defs/domain_tag" },
+        "observed_at": { "$ref": "common.schema.json#/$defs/iso_datetime" },
+        "role_alias": { "type": "string" },
+        "app_version": { "type": "string" },
+        "coverage_status": { "$ref": "common.schema.json#/$defs/coverage_status" },
+        "states": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["state_id", "name", "reproduce_steps", "coverage_status"],
+            "properties": {
+              "state_id": { "$ref": "common.schema.json#/$defs/state_id" },
+              "name": { "type": "string", "minLength": 1 },
+              "parent_condition": { "type": ["string", "null"] },
+              "iframe_context": { "type": ["string", "null"] },
+              "reproduce_steps": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "coverage_status": { "$ref": "common.schema.json#/$defs/coverage_status" },
+              "blocker_reason": { "type": ["string", "null"] }
+            }
+          }
+        },
+        "items": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "item_id",
+              "control_id",
+              "state_id",
+              "hierarchy_path",
+              "control_type",
+              "text_kind",
+              "en_status",
+              "zh_status",
+              "en_text",
+              "zh_text",
+              "pairing_method"
+            ],
+            "properties": {
+              "item_id": { "$ref": "common.schema.json#/$defs/item_id" },
+              "control_id": { "$ref": "common.schema.json#/$defs/control_id" },
+              "state_id": { "$ref": "common.schema.json#/$defs/state_id" },
+              "hierarchy_path": {
+                "type": "string",
+                "minLength": 1,
+                "description": "Human-readable hierarchy path rendered in column 1 of Excel (e.g. 外汇交易 > 即期簿记 > 主表单 > 交易对手)."
+              },
+              "control_type": { "$ref": "common.schema.json#/$defs/control_type" },
+              "text_kind": { "$ref": "common.schema.json#/$defs/text_kind" },
+              "en_status": { "$ref": "common.schema.json#/$defs/observation_status" },
+              "zh_status": { "$ref": "common.schema.json#/$defs/observation_status" },
+              "en_text": { "type": ["string", "null"] },
+              "zh_text": { "type": ["string", "null"] },
+              "i18n_key_or_code": { "type": ["string", "null"] },
+              "pairing_method": {
+                "type": "string",
+                "enum": [
+                  "stable_key_or_code",
+                  "control_structure_and_state",
+                  "manual_confirmed",
+                  "unpaired"
+                ]
+              },
+              "sibling_labels": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "parent_condition": { "type": ["string", "null"] },
+              "option_group": { "type": ["string", "null"] },
+              "disabled": { "type": "boolean", "default": false },
+              "synthetic_probe": { "type": "boolean", "default": false },
+              "notes": { "type": ["string", "null"] }
+            }
+          }
+        }
+      }
+    }
+  }
+}

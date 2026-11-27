@@ -1,0 +1,307 @@
+{
+  "contract_version": "1.0.0",
+  "artifact_kind": "golden_set",
+  "dataset_version": "v0.1.0",
+  "cases": [
+    {
+      "case_id": "GS-0001",
+      "split": "dev",
+      "concept_family": "fx_counterparty",
+      "category": "standard_term",
+      "item": {
+        "item_id": "UI-000001",
+        "hierarchy_path": "外汇交易 > 即期簿记 > 交易主表单 > 交易对手",
+        "domain_tag": "fx",
+        "control_type": "label",
+        "en_text": "Counterparty",
+        "zh_text": "反对党",
+        "sibling_labels": ["Value Date", "Ccy Pair", "Spot Margin"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["建议修改"],
+      "acceptable_zh_terms": ["交易对手方", "交易对手"],
+      "expected_doc_ids": ["DOC-CN-FX-2025", "DOC-PDF-GLOSSARY"],
+      "must_abstain": false,
+      "notes": "Obvious mistranslation in Mainland FX context."
+    },
+    {
+      "case_id": "GS-0002",
+      "split": "dev",
+      "concept_family": "fx_value_date",
+      "category": "standard_term",
+      "item": {
+        "item_id": "UI-000002",
+        "hierarchy_path": "外汇交易 > 即期簿记 > 交易主表单 > 起息日",
+        "domain_tag": "fx",
+        "control_type": "label",
+        "en_text": "Value Date",
+        "zh_text": "起息日",
+        "sibling_labels": ["Trade Date", "Tenor"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["保留"],
+      "acceptable_zh_terms": ["起息日"],
+      "expected_doc_ids": ["DOC-CN-FX-2025", "DOC-XLSX-FIELDS"],
+      "must_abstain": false
+    },
+    {
+      "case_id": "GS-0003",
+      "split": "dev",
+      "concept_family": "margin_polysemy",
+      "category": "polysemy",
+      "item": {
+        "item_id": "UI-000003",
+        "hierarchy_path": "外汇交易 > 即期簿记 > 交易主表单 > 客户点差",
+        "domain_tag": "fx",
+        "control_type": "label",
+        "en_text": "Margin",
+        "zh_text": "保证金",
+        "sibling_labels": ["Client Spot", "Spot Rate", "Ccy Pair"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["建议修改"],
+      "acceptable_zh_terms": ["点差", "客户点差"],
+      "expected_doc_ids": ["DOC-CN-FX-2025"],
+      "must_abstain": false,
+      "notes": "In FX spot pricing context, Margin means point spread, not collateral margin."
+    },
+    {
+      "case_id": "GS-0004",
+      "split": "dev",
+      "concept_family": "margin_polysemy",
+      "category": "polysemy",
+      "item": {
+        "item_id": "UI-000007",
+        "hierarchy_path": "风险管理 > 授信与保证金 > 抵押品区 > 保证金",
+        "domain_tag": "risk_management",
+        "control_type": "label",
+        "en_text": "Margin",
+        "zh_text": "保证金",
+        "sibling_labels": ["Initial Margin", "Variation Margin", "Netting"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["保留"],
+      "acceptable_zh_terms": ["保证金"],
+      "expected_doc_ids": ["DOC-CN-FX-2025"],
+      "must_abstain": false,
+      "notes": "In collateral/risk context, Margin correctly translates as 保证金."
+    },
+    {
+      "case_id": "GS-0005",
+      "split": "dev",
+      "concept_family": "short_acronym_fx",
+      "category": "short_acronym",
+      "item": {
+        "item_id": "UI-000101",
+        "hierarchy_path": "外汇交易 > 即期簿记 > 产品类型 > 外汇",
+        "domain_tag": "fx",
+        "control_type": "dropdown_option",
+        "en_text": "FX",
+        "zh_text": "特效",
+        "sibling_labels": ["Spot", "Forward", "Swap"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["建议修改"],
+      "acceptable_zh_terms": ["外汇"],
+      "expected_doc_ids": ["DOC-CN-FX-2025", "DOC-PDF-GLOSSARY"],
+      "must_abstain": false,
+      "notes": "2-char acronym test (<3 chars FTS5 trigram blind spot)."
+    },
+    {
+      "case_id": "GS-0006",
+      "split": "dev",
+      "concept_family": "settlement_missing",
+      "category": "missing_or_raw_key",
+      "item": {
+        "item_id": "UI-000004",
+        "hierarchy_path": "外汇交易 > 即期簿记 > 交易主表单 > 清算指令",
+        "domain_tag": "fx",
+        "control_type": "label",
+        "en_text": "Settlement Instruction",
+        "zh_text": "fx.spot.settlement_instruction",
+        "sibling_labels": ["Value Date", "Counterparty"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["缺译"],
+      "acceptable_zh_terms": ["清算指令", "结算路径"],
+      "expected_doc_ids": ["DOC-CN-FX-2025", "DOC-XLSX-FIELDS"],
+      "must_abstain": false
+    },
+    {
+      "case_id": "GS-0007",
+      "split": "dev",
+      "concept_family": "hk_derivatives_regional",
+      "category": "regional_variant",
+      "item": {
+        "item_id": "UI-000102",
+        "hierarchy_path": "衍生品交易 > 产品总览 > 衍生工具",
+        "domain_tag": "derivatives",
+        "control_type": "label",
+        "en_text": "Derivatives",
+        "zh_text": "衍生工具",
+        "sibling_labels": ["IRS", "Option"]
+      },
+      "target_region": "HK",
+      "target_locale": "zh-HK",
+      "expected_verdicts": ["保留"],
+      "acceptable_zh_terms": ["衍生工具"],
+      "expected_doc_ids": ["DOC-HK-GLOSSARY-2025"],
+      "must_abstain": false,
+      "notes": "Legitimate HK variant when target_region=HK."
+    },
+    {
+      "case_id": "GS-0008",
+      "split": "dev",
+      "concept_family": "en_only_overlay",
+      "category": "insufficient_evidence",
+      "item": {
+        "item_id": "UI-000010",
+        "hierarchy_path": "风险管理 > 授信与保证金 > 高级配置 > 合成信用叠加",
+        "domain_tag": "risk_management",
+        "control_type": "label",
+        "en_text": "Synthetic Credit Overlay",
+        "zh_text": "综合信用覆盖",
+        "sibling_labels": ["Novation", "Haircut"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["待核对"],
+      "acceptable_zh_terms": [],
+      "expected_doc_ids": ["DOC-EN-RISK-ONLY"],
+      "must_abstain": true,
+      "notes": "Only EN-only definition exists; must not fabricate authoritative ZH term."
+    },
+    {
+      "case_id": "GS-0009",
+      "split": "holdout",
+      "concept_family": "short_acronym_irs",
+      "category": "short_acronym",
+      "item": {
+        "item_id": "UI-000201",
+        "hierarchy_path": "衍生品交易 > 利率产品 > 利率互换",
+        "domain_tag": "derivatives",
+        "control_type": "dropdown_option",
+        "en_text": "IRS",
+        "zh_text": "税务局",
+        "sibling_labels": ["CCS", "Tenor", "Fixed Leg"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["建议修改"],
+      "acceptable_zh_terms": ["利率互换"],
+      "expected_doc_ids": ["DOC-CN-FX-2025", "DOC-PDF-GLOSSARY"],
+      "must_abstain": false
+    },
+    {
+      "case_id": "GS-0010",
+      "split": "holdout",
+      "concept_family": "netting_regional_cn",
+      "category": "regional_variant",
+      "item": {
+        "item_id": "UI-000008",
+        "hierarchy_path": "风险管理 > 授信与保证金 > 主协议区 > 净额结算",
+        "domain_tag": "risk_management",
+        "control_type": "label",
+        "en_text": "Netting",
+        "zh_text": "净额计算",
+        "sibling_labels": ["Counterparty", "Master Agreement"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["建议修改"],
+      "acceptable_zh_terms": ["净额结算"],
+      "expected_doc_ids": ["DOC-CN-FX-2025"],
+      "must_abstain": false
+    },
+    {
+      "case_id": "GS-0011",
+      "split": "holdout",
+      "concept_family": "tenor_field_dict",
+      "category": "standard_term",
+      "item": {
+        "item_id": "UI-000202",
+        "hierarchy_path": "外汇交易 > 远期簿记 > 期限",
+        "domain_tag": "fx",
+        "control_type": "label",
+        "en_text": "Tenor",
+        "zh_text": "男高音",
+        "sibling_labels": ["Value Date", "Maturity Date"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["建议修改"],
+      "acceptable_zh_terms": ["期限"],
+      "expected_doc_ids": ["DOC-CN-FX-2025", "DOC-XLSX-FIELDS"],
+      "must_abstain": false
+    },
+    {
+      "case_id": "GS-0012",
+      "split": "holdout",
+      "concept_family": "folder_conflict",
+      "category": "same_scope_conflict",
+      "item": {
+        "item_id": "UI-000203",
+        "hierarchy_path": "外汇交易 > 即期簿记 > 交易主表单 > 台账",
+        "domain_tag": "fx",
+        "control_type": "label",
+        "en_text": "Folder",
+        "zh_text": "文件夹",
+        "sibling_labels": ["Counterparty", "Ccy Pair"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["建议修改", "来源冲突"],
+      "acceptable_zh_terms": ["台账", "交易账簿", "组合账簿"],
+      "expected_doc_ids": ["DOC-CN-FX-2025", "DOC-PDF-GLOSSARY"],
+      "must_abstain": false
+    },
+    {
+      "case_id": "GS-0013",
+      "split": "holdout",
+      "concept_family": "unknown_custom_field",
+      "category": "insufficient_evidence",
+      "item": {
+        "item_id": "UI-000204",
+        "hierarchy_path": "系统设置 > 自定义参数 > 内部路由标签",
+        "domain_tag": "general_ui",
+        "control_type": "label",
+        "en_text": "Desk Routing Tag X9",
+        "zh_text": "路由标签X9",
+        "sibling_labels": ["Status", "Updated At"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["待核对", "保留"],
+      "acceptable_zh_terms": [],
+      "expected_doc_ids": [],
+      "must_abstain": true
+    },
+    {
+      "case_id": "GS-0014",
+      "split": "holdout",
+      "concept_family": "bic_message_code",
+      "category": "short_acronym",
+      "item": {
+        "item_id": "UI-000205",
+        "hierarchy_path": "报文与支付 > 清算路径 > 银行识别码",
+        "domain_tag": "payments_messaging",
+        "control_type": "label",
+        "en_text": "BIC",
+        "zh_text": "比克",
+        "sibling_labels": ["Settlement Instruction", "Correspondent Bank"]
+      },
+      "target_region": "CN_MAINLAND",
+      "target_locale": "zh-CN",
+      "expected_verdicts": ["建议修改"],
+      "acceptable_zh_terms": ["银行识别码", "机构识别码"],
+      "expected_doc_ids": ["DOC-XLSX-FIELDS"],
+      "must_abstain": false
+    }
+  ]
+}

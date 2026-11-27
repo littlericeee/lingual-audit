@@ -1,0 +1,45 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "lingual-audit"
+version = "0.1.0"
+description = "Bilingual UI inventory, terminology standardization, and tiered hybrid RAG audit workflow for complex web systems."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "jsonschema>=4.10",
+  "PyYAML>=6.0",
+  "pdfplumber>=0.11",
+  "beautifulsoup4>=4.12",
+  "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+browser = ["playwright>=1.48"]
+semantic = ["numpy>=1.26", "sentence-transformers>=3.0"]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[project.scripts]
+lingual-audit = "lingual_audit.cli:main"
+
+[tool.setuptools]
+packages = ["lingual_audit", "lingual_audit.corpus", "lingual_audit.explore", "lingual_audit.schemas"]
+
+[tool.setuptools.package-dir]
+"" = "src"
+"lingual_audit.schemas" = "contracts"
+
+[tool.setuptools.package-data]
+"lingual_audit.schemas" = ["*.json"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+markers = ["demo_server: requires permission to bind a local HTTP socket"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"

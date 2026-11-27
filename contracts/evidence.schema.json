@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lingual-audit.local/contracts/evidence.schema.json",
+  "title": "Retrieval Query and Controlled Evidence Bundle Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "item_id",
+    "corpus_snapshot_hash",
+    "query",
+    "candidates",
+    "conflict_flags"
+  ],
+  "properties": {
+    "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+    "item_id": { "$ref": "common.schema.json#/$defs/item_id" },
+    "corpus_snapshot_hash": { "$ref": "common.schema.json#/$defs/sha256" },
+    "retrieval_mode": {
+      "type": "string",
+      "enum": ["glossary_fts", "hybrid_vector", "hybrid_vector_rerank"]
+    },
+    "query": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["en_text", "hierarchy_path", "domain_tag", "target_region", "target_locale"],
+      "properties": {
+        "en_text": { "type": ["string", "null"] },
+        "zh_text": { "type": ["string", "null"] },
+        "hierarchy_path": { "type": "string" },
+        "control_type": { "$ref": "common.schema.json#/$defs/control_type" },
+        "sibling_labels": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "domain_tag": { "$ref": "common.schema.json#/$defs/domain_tag" },
+        "target_region": { "$ref": "common.schema.json#/$defs/region_scope" },
+        "target_locale": { "$ref": "common.schema.json#/$defs/locale_code" }
+      }
+    },
+    "candidates": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "evidence_id",
+          "source_kind",
+          "doc_id",
+          "doc_version",
+          "publisher",
+          "title",
+          "short_citation",
+          "domain_tags",
+          "region_scope",
+          "normative_level",
+          "support_type",
+          "applicability",
+          "channels",
+          "score",
+          "excerpt",
+          "excerpt_hash",
+          "locator"
+        ],
+        "properties": {
+          "evidence_id": { "type": "string", "minLength": 1 },
+          "source_kind": { "type": "string", "enum": ["glossary", "chunk"] },
+          "doc_id": { "$ref": "common.schema.json#/$defs/doc_id" },
+          "doc_version": { "type": "string", "minLength": 1 },
+          "publisher": { "type": "string", "minLength": 1 },
+          "title": { "type": "string", "minLength": 1 },
+          "short_citation": { "type": "string", "minLength": 1 },
+          "canonical_group": { "type": ["string", "null"] },
+          "domain_tags": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/domain_tag" }
+          },
+          "region_scope": { "$ref": "common.schema.json#/$defs/region_scope" },
+          "target_locale": {
+            "oneOf": [
+              { "$ref": "common.schema.json#/$defs/locale_code" },
+              { "type": "null" }
+            ]
+          },
+          "normative_level": { "$ref": "common.schema.json#/$defs/normative_level" },
+          "support_type": { "$ref": "common.schema.json#/$defs/support_type" },
+          "applicability": {
+            "type": "string",
+            "enum": ["in_scope", "regional_variant", "cross_domain_reference", "en_definition_only", "out_of_scope"]
+          },
+          "candidate_zh": { "type": ["string", "null"] },
+          "channels": {
+            "type": "array",
+            "minItems": 1,
+            "items": { "type": "string", "enum": ["exact_glossary", "alias_glossary", "fts_bm25", "cjk_bigram", "dense_vector"] }
+          },
+          "score": { "type": "number" },
+          "excerpt": { "type": "string", "minLength": 1 },
+          "excerpt_hash": { "$ref": "common.schema.json#/$defs/sha256" },
+          "locator": { "$ref": "common.schema.json#/$defs/locator" }
+        }
+      }
+    },
+    "conflict_flags": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "same_scope_conflict",
+        "regional_variant_present",
+        "en_only_evidence",
+        "no_authoritative_hit"
+      ],
+      "properties": {
+        "same_scope_conflict": { "type": "boolean" },
+        "regional_variant_present": { "type": "boolean" },
+        "en_only_evidence": { "type": "boolean" },
+        "no_authoritative_hit": { "type": "boolean" },
+        "conflicting_zh_terms": {
+          "type": "array",
+          "items": { "type": "string" }
+        }
+      }
+    }
+  }
+}

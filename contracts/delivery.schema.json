@@ -1,0 +1,67 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lingual-audit.local/contracts/delivery.schema.json",
+  "title": "Excel Workbook Delivery Manifest Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "run_id",
+    "exported_at",
+    "workbook_rel_path",
+    "workbook_sha256",
+    "columns",
+    "sheets",
+    "row_mappings",
+    "readback_verified"
+  ],
+  "properties": {
+    "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+    "run_id": { "$ref": "common.schema.json#/$defs/run_id" },
+    "exported_at": { "$ref": "common.schema.json#/$defs/iso_datetime" },
+    "workbook_rel_path": { "$ref": "common.schema.json#/$defs/rel_posix_path" },
+    "workbook_sha256": { "$ref": "common.schema.json#/$defs/sha256" },
+    "columns": {
+      "type": "array",
+      "const": [
+        "页面层级",
+        "系统英文",
+        "系统中文",
+        "AI 建议中文",
+        "比对结论",
+        "修改理由与业务依据"
+      ]
+    },
+    "include_summary_sheets": { "type": "boolean", "default": false },
+    "sheets": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["menu_id", "sheet_name", "menu_hierarchy_zh", "row_count"],
+        "properties": {
+          "menu_id": { "$ref": "common.schema.json#/$defs/menu_id" },
+          "sheet_name": { "type": "string", "minLength": 1, "maxLength": 31 },
+          "menu_hierarchy_zh": { "type": "string" },
+          "row_count": { "type": "integer", "minimum": 0 }
+        }
+      }
+    },
+    "row_mappings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": ["sheet_name", "row_number", "item_id", "verdict", "row_hash"],
+        "properties": {
+          "sheet_name": { "type": "string", "minLength": 1, "maxLength": 31 },
+          "row_number": { "type": "integer", "minimum": 2 },
+          "item_id": { "$ref": "common.schema.json#/$defs/item_id" },
+          "verdict": { "$ref": "common.schema.json#/$defs/verdict" },
+          "row_hash": { "$ref": "common.schema.json#/$defs/sha256" }
+        }
+      }
+    },
+    "readback_verified": { "type": "boolean" }
+  }
+}

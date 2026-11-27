@@ -1,0 +1,140 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://lingual-audit.local/contracts/eval.schema.json",
+  "title": "Golden Set and Evaluation Report Contract",
+  "oneOf": [
+    { "$ref": "#/$defs/golden_set" },
+    { "$ref": "#/$defs/eval_report" }
+  ],
+  "$defs": {
+    "golden_set": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "artifact_kind", "dataset_version", "cases"],
+      "properties": {
+        "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+        "artifact_kind": { "const": "golden_set" },
+        "dataset_version": { "type": "string", "minLength": 1 },
+        "cases": {
+          "type": "array",
+          "minItems": 1,
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "case_id",
+              "split",
+              "concept_family",
+              "category",
+              "item",
+              "target_region",
+              "target_locale",
+              "expected_verdicts",
+              "acceptable_zh_terms",
+              "expected_doc_ids",
+              "must_abstain"
+            ],
+            "properties": {
+              "case_id": { "type": "string", "pattern": "^GS-[0-9]{4,}$" },
+              "split": { "type": "string", "enum": ["dev", "holdout"] },
+              "concept_family": { "type": "string", "minLength": 1 },
+              "category": {
+                "type": "string",
+                "enum": [
+                  "short_acronym",
+                  "polysemy",
+                  "regional_variant",
+                  "same_scope_conflict",
+                  "insufficient_evidence",
+                  "missing_or_raw_key",
+                  "bad_pairing",
+                  "cross_menu_consistency",
+                  "standard_term"
+                ]
+              },
+              "item": {
+                "type": "object",
+                "required": ["item_id", "hierarchy_path", "domain_tag", "control_type", "en_text", "zh_text"],
+                "properties": {
+                  "item_id": { "$ref": "common.schema.json#/$defs/item_id" },
+                  "hierarchy_path": { "type": "string" },
+                  "domain_tag": { "$ref": "common.schema.json#/$defs/domain_tag" },
+                  "control_type": { "$ref": "common.schema.json#/$defs/control_type" },
+                  "en_text": { "type": ["string", "null"] },
+                  "zh_text": { "type": ["string", "null"] },
+                  "sibling_labels": {
+                    "type": "array",
+                    "items": { "type": "string" }
+                  }
+                }
+              },
+              "target_region": { "$ref": "common.schema.json#/$defs/region_scope" },
+              "target_locale": { "$ref": "common.schema.json#/$defs/locale_code" },
+              "expected_verdicts": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "$ref": "common.schema.json#/$defs/verdict" }
+              },
+              "acceptable_zh_terms": {
+                "type": "array",
+                "items": { "type": "string" }
+              },
+              "expected_doc_ids": {
+                "type": "array",
+                "items": { "$ref": "common.schema.json#/$defs/doc_id" }
+              },
+              "must_abstain": { "type": "boolean" },
+              "notes": { "type": "string" }
+            }
+          }
+        }
+      }
+    },
+    "eval_report": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "artifact_kind",
+        "evaluated_at",
+        "dataset_version",
+        "arm_name",
+        "total_cases",
+        "metrics"
+      ],
+      "properties": {
+        "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+        "artifact_kind": { "const": "eval_report" },
+        "evaluated_at": { "$ref": "common.schema.json#/$defs/iso_datetime" },
+        "dataset_version": { "type": "string" },
+        "arm_name": { "type": "string" },
+        "split": { "type": "string", "enum": ["all", "dev", "holdout"] },
+        "total_cases": { "type": "integer", "minimum": 1 },
+        "metrics": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "evidence_recall_at_k",
+            "citation_integrity_rate",
+            "verdict_accuracy",
+            "term_accuracy",
+            "conflict_detection_rate",
+            "abstention_precision",
+            "false_abstention_rate"
+          ],
+          "properties": {
+            "evidence_recall_at_k": { "type": "number", "minimum": 0, "maximum": 1 },
+            "citation_integrity_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+            "verdict_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+            "term_accuracy": { "type": "number", "minimum": 0, "maximum": 1 },
+            "conflict_detection_rate": { "type": "number", "minimum": 0, "maximum": 1 },
+            "abstention_precision": { "type": "number", "minimum": 0, "maximum": 1 },
+            "false_abstention_rate": { "type": "number", "minimum": 0, "maximum": 1 }
+          }
+        },
+        "per_category": { "type": "object" },
+        "case_results": { "type": "array" }
+      }
+    }
+  }
+}
