@@ -391,7 +391,7 @@ def build_parser() -> argparse.ArgumentParser:
     p_rval = rev_sub.add_parser("validate", help="Verify review schema and citation integrity against SQLite index.")
     p_rval.add_argument("--review-file", required=True)
     p_rval.add_argument("--db-path", required=True)
-    p_rval.add_argument("--records-dir")
+    p_rval.add_argument("--records-dir", required=True)
     p_rval.set_defaults(func=_cmd_review)
 
     p_rcon = rev_sub.add_parser("consistency", help="Run concept-scoped cross-menu consistency audit.")

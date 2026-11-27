@@ -35,6 +35,10 @@ def _normalized_text(value: str | None) -> str:
     return " ".join((value or "").split())
 
 
+def _by_id(page: Any, elem_id: str) -> Any:
+    return page.locator(f"[id={json.dumps(elem_id)}]")
+
+
 def _wait_for_stability(page: Any) -> None:
     from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
@@ -177,7 +181,9 @@ def _validation_snapshot(page: Any, policy: ExplorationPolicy) -> dict[str, str]
     }
 
 
-def _probe_inputs(context: Any, page: Any, policy: ExplorationPolicy) -> tuple[dict[str, Any], dict[str, dict[str, str]]]:
+def _probe_inputs(
+    page: Any, policy: ExplorationPolicy
+) -> tuple[dict[str, Any], dict[str, dict[str, str]]]:
     from playwright.sync_api import TimeoutError as PlaywrightTimeoutError
 
     results: dict[str, Any] = {}
@@ -190,12 +196,6 @@ def _probe_inputs(context: Any, page: Any, policy: ExplorationPolicy) -> tuple[d
         }))"""
     )
 
-    def block_websocket(ws_route: Any) -> None:
-        ws_route.close(code=1008, reason="Synthetic UI probe network isolation")
-
-    # Playwright exposes no context-level WebSocket unroute API. Keep this hard
-    # blocker installed for the remainder of the short-lived isolated context.
-    context.route_web_socket("**/*", block_websocket)
     for candidate in candidates:
         purpose = " ".join(
             str(candidate.get(key) or "") for key in ("label", "placeholder", "name", "id")
@@ -209,7 +209,7 @@ def _probe_inputs(context: Any, page: Any, policy: ExplorationPolicy) -> tuple[d
         ):
             continue
         input_id = str(candidate["id"])
-        locator = page.locator(f"#{input_id}")
+        locator = _by_id(page, input_id)
         for language in ("en", "zh"):
             _switch_language(page, language)
             try:
@@ -217,31 +217,19 @@ def _probe_inputs(context: Any, page: Any, policy: ExplorationPolicy) -> tuple[d
             except PlaywrightTimeoutError:
                 page.wait_for_timeout(100)
 
-            def abort_request(route: Any, request: Any) -> None:
-                # During a synthetic probe, every request is unsafe. This also covers
-                # static-looking URLs issued by fetch/XHR and all mutating methods.
-                route.abort()
-
-            context.route("**/*", abort_request)
-            reset_verified = False
-            try:
-                locator.fill("123!")
-                locator.blur()
-                page.wait_for_timeout(50)
-                messages[language].update(_validation_snapshot(page, policy))
-                locator.fill("")
-                locator.blur()
-                page.wait_for_timeout(50)
-                reset_verified = locator.input_value() == "" and not _validation_snapshot(page, policy)
-                results.setdefault(input_id, {"languages": [], "reset_verified": True})
-                results[input_id]["languages"].append(language)
-                results[input_id]["reset_verified"] &= reset_verified
-                if not reset_verified:
-                    context.close()
-                    raise RuntimeError(f"Synthetic probe reset verification failed for #{input_id}")
-            finally:
-                if reset_verified:
-                    context.unroute("**/*", abort_request)
+            locator.fill("123!")
+            locator.blur()
+            page.wait_for_timeout(50)
+            messages[language].update(_validation_snapshot(page, policy))
+            locator.fill("")
+            locator.blur()
+            page.wait_for_timeout(50)
+            reset_verified = locator.input_value() == "" and not _validation_snapshot(page, policy)
+            results.setdefault(input_id, {"languages": [], "reset_verified": True})
+            results[input_id]["languages"].append(language)
+            results[input_id]["reset_verified"] &= reset_verified
+            if not reset_verified:
+                raise RuntimeError(f"Synthetic probe reset verification failed for #{input_id}")
     return results, messages
 
 
@@ -312,7 +300,7 @@ def explore_target(
         for menu_index, menu_control in enumerate(menu_controls, start=1):
             if menu_control.get("id"):
                 _switch_language(page, "en")
-                control = page.locator(f"#{menu_control['id']}")
+                control = _by_id(page, str(menu_control["id"]))
                 label = _normalized_text(control.inner_text())
                 if not policy.allows_action(control_type="menu_item", label=label):
                     continue
@@ -398,14 +386,31 @@ def explore_target(
         if blocked_note:
             outcome_status = "skipped"
         if should_probe and page_records:
-            first_menu = menu_controls[0]
-            if first_menu.get("id"):
-                page.locator(f"#{first_menu['id']}").click()
+            probe_context = browser.new_context(service_workers="block")
+
+            def block_websocket(ws_route: Any) -> None:
+                ws_route.close(code=1008, reason="Synthetic UI probe network isolation")
+
+            def abort_request(route: Any, request: Any) -> None:
+                # Every request issued during synthetic input is unsafe, including
+                # delayed fetch/XHR callbacks and mutating requests.
+                route.abort()
+
+            probe_context.route_web_socket("**/*", block_websocket)
             try:
-                probe_results, probe_messages = _probe_inputs(context, page, policy)
+                probe_page = probe_context.new_page()
+                probe_page.goto(url, wait_until="domcontentloaded")
+                _wait_for_stability(probe_page)
+                probe_context.route("**/*", abort_request)
+                first_menu = menu_controls[0]
+                if first_menu.get("id"):
+                    _by_id(probe_page, str(first_menu["id"])).click()
+                probe_results, probe_messages = _probe_inputs(probe_page, policy)
             except RuntimeError as exc:
                 blocked_note = str(exc)
                 outcome_status = "blocked"
+            finally:
+                probe_context.close()
             first_record = page_records[0]
             for key in sorted(set(probe_messages["en"]) | set(probe_messages["zh"])):
                 en_text = probe_messages["en"].get(key)

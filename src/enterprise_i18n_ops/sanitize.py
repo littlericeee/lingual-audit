@@ -44,6 +44,20 @@ FORBIDDEN_PATH_PATTERNS: tuple[str, ...] = (
 
 ALLOWED_ENV_TEMPLATES: frozenset[str] = frozenset({".env.example", ".env.test"})
 
+FORBIDDEN_BROWSER_STATE_FILES: frozenset[str] = frozenset(
+    {
+        "cookies",
+        "cookies-journal",
+        "login data",
+        "login data-journal",
+        "web data",
+        "web data-journal",
+        "local state",
+        "network persistent state",
+        "storage-state.json",
+    }
+)
+
 FORBIDDEN_DIR_SUBSTRINGS: tuple[str, ...] = ("profile", "cookies")
 
 TEXT_SUFFIXES: frozenset[str] = frozenset(
@@ -102,11 +116,13 @@ CONTENT_RULES: tuple[tuple[str, re.Pattern[str]], ...] = (
 
 def is_forbidden_secret_path(rel_path: Path) -> bool:
     """Return True if path matches credential/secret patterns (checked without reading)."""
-    name = rel_path.name
+    name = rel_path.name.lower()
     if name in ALLOWED_ENV_TEMPLATES:
         return False
+    if name in FORBIDDEN_BROWSER_STATE_FILES:
+        return True
     for pat in FORBIDDEN_PATH_PATTERNS:
-        if fnmatch.fnmatch(name, pat):
+        if fnmatch.fnmatch(name, pat.lower()):
             return True
     for part in rel_path.parts[:-1]:
         lowered = part.lower()
@@ -134,6 +150,18 @@ def scan_directory(
     rejected_secret_paths = 0
 
     normalized_blocklist = [t.strip() for t in (blocklist_terms or []) if t.strip()]
+
+    root_name = root.name.lower()
+    if any(sub in root_name for sub in FORBIDDEN_DIR_SUBSTRINGS):
+        rejected_secret_paths += 1
+        violations.append(
+            {
+                "rule": "forbidden_secret_path",
+                "path": ".",
+                "line": None,
+                "detail": "Credential or browser-profile root rejected without reading contents.",
+            }
+        )
 
     for path in sorted(root.rglob("*")):
         rel = path.relative_to(root)

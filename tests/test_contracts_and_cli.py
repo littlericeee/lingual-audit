@@ -5,6 +5,8 @@ from __future__ import annotations
 import json
 from pathlib import Path
 
+import pytest
+
 from enterprise_i18n_ops.cli import main
 from enterprise_i18n_ops.contracts import (
     CONTRACT_VERSION,
@@ -178,6 +180,49 @@ def test_sanitize_rejects_secret_paths_without_reading_and_catches_leaks(tmp_pat
     rules = {v["rule"] for v in report["violations"]}
     assert "forbidden_secret_path" in rules
     assert "private_ipv4" in rules
+
+
+def test_sanitize_rejects_browser_credential_files_and_profile_root(tmp_path: Path) -> None:
+    browser_data = tmp_path / "browser-data"
+    (browser_data / "Default").mkdir(parents=True)
+    for rel_path in (Path("Default/Cookies"), Path("Login Data"), Path("Web Data")):
+        (browser_data / rel_path).write_text("must not be read", encoding="utf-8")
+
+    report = scan_directory(browser_data)
+    assert report["clean"] is False
+    assert all(
+        any(
+            violation["rule"] == "forbidden_secret_path"
+            and violation["path"] == rel_path.as_posix()
+            for violation in report["violations"]
+        )
+        for rel_path in (Path("Default/Cookies"), Path("Login Data"), Path("Web Data"))
+    )
+
+    profile_root = tmp_path / "chrome-profile"
+    profile_root.mkdir()
+    profile_report = scan_directory(profile_root)
+    assert profile_report["clean"] is False
+    assert any(
+        violation["rule"] == "forbidden_secret_path"
+        for violation in profile_report["violations"]
+    )
+
+
+def test_review_validate_requires_records_dir(tmp_path: Path) -> None:
+    with pytest.raises(SystemExit) as exc_info:
+        main(
+            [
+                "review",
+                "validate",
+                "--review-file",
+                str(tmp_path / "review.json"),
+                "--db-path",
+                str(tmp_path / "corpus.db"),
+            ]
+        )
+
+    assert exc_info.value.code == 2
 
 
 def test_repository_itself_passes_sanitization_check() -> None:

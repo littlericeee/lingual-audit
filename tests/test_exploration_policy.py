@@ -2,6 +2,9 @@ from __future__ import annotations
 
 import json
 import threading
+import time
+from collections.abc import Iterator
+from contextlib import contextmanager
 from http.server import SimpleHTTPRequestHandler, ThreadingHTTPServer
 from pathlib import Path
 from typing import ClassVar
@@ -38,6 +41,38 @@ def demo_server():  # type: ignore[no-untyped-def]
     thread.start()
     try:
         yield f"http://127.0.0.1:{server.server_port}/index.html", _RecordingHandler.posts
+    finally:
+        server.shutdown()
+        thread.join(timeout=5)
+        server.server_close()
+
+
+@contextmanager
+def _html_server(html: str) -> Iterator[tuple[str, list[str]]]:
+    posts: list[str] = []
+
+    class Handler(SimpleHTTPRequestHandler):
+        def log_message(self, format: str, *args: object) -> None:
+            pass
+
+        def do_GET(self) -> None:
+            body = html.encode("utf-8")
+            self.send_response(200)
+            self.send_header("Content-Type", "text/html; charset=utf-8")
+            self.send_header("Content-Length", str(len(body)))
+            self.end_headers()
+            self.wfile.write(body)
+
+        def do_POST(self) -> None:
+            posts.append(self.path)
+            self.send_response(204)
+            self.end_headers()
+
+    server = ThreadingHTTPServer(("127.0.0.1", 0), Handler)
+    thread = threading.Thread(target=server.serve_forever, daemon=True)
+    thread.start()
+    try:
+        yield f"http://127.0.0.1:{server.server_port}/index.html", posts
     finally:
         server.shutdown()
         thread.join(timeout=5)
@@ -92,6 +127,73 @@ def test_thorough_probe_captures_bilingual_validation_and_aborts_autosave(
     validation = [item for item in items if item["control_type"] == "validation_message"]
     assert any(item["en_text"] == "Counterparty code must be 4-12 uppercase letters." for item in validation)
     assert any(item["zh_text"] == "交易对手代码须为4-12位大写字母。" for item in validation)
+
+
+def test_thorough_probe_destroys_debounced_autosave_before_it_can_post(tmp_path: Path) -> None:
+    html = """<!doctype html><html lang="en"><head><style>.hidden{display:none}</style></head><body>
+    <button id="lang-toggle" type="button">Language</button>
+    <button id="menu:fx.spot" data-menu="fx" data-i18n="nav.fx">FX</button>
+    <label for="form:cpty.code" data-i18n="fx.cpty">Counterparty</label>
+    <input id="form:cpty.code" name="counterparty">
+    <div id="validation" class="err hidden" data-i18n="fx.validation">Invalid code</div>
+    <script>
+      let lang = 'en';
+      document.getElementById('lang-toggle').onclick = () => {
+        lang = lang === 'en' ? 'zh' : 'en';
+        document.documentElement.lang = lang;
+        document.querySelector('[data-i18n="nav.fx"]').textContent = lang === 'en' ? 'FX' : '外汇';
+        document.querySelector('[data-i18n="fx.cpty"]').textContent = lang === 'en' ? 'Counterparty' : '交易对手';
+        document.querySelector('[data-i18n="fx.validation"]').textContent = lang === 'en' ? 'Invalid code' : '代码无效';
+      };
+      const input = document.getElementById('form:cpty.code');
+      let timer;
+      const autosave = () => {
+        clearTimeout(timer);
+        timer = setTimeout(() => fetch('/api/autosave', {method: 'POST'}).catch(() => {}), 300);
+      };
+      input.addEventListener('input', autosave);
+      input.addEventListener('blur', autosave);
+      input.addEventListener('input', () => {
+        document.getElementById('validation').classList.toggle('hidden', !input.value);
+      });
+    </script></body></html>"""
+    with _html_server(html) as (url, posts):
+        result = explore_target(url, tmp_path / "ws", depth="thorough")
+        time.sleep(0.5)
+
+    assert result["status"] == "done"
+    assert posts.count("/api/autosave") == 0
+
+
+@pytest.mark.parametrize("depth", ["standard", "thorough"])
+def test_special_character_ids_work_in_all_probe_modes(tmp_path: Path, depth: str) -> None:
+    html = """<!doctype html><html lang="en"><head><style>.hidden{display:none}</style></head><body>
+    <button id="lang-toggle" type="button">Language</button>
+    <button id="menu:fx.spot" data-menu="fx" data-i18n="nav.fx">FX</button>
+    <label for="form:cpty.code" data-i18n="fx.cpty">Counterparty</label>
+    <input id="form:cpty.code" name="counterparty">
+    <div id="validation" class="err hidden" data-i18n="fx.validation">Invalid code</div>
+    <script>
+      let lang = 'en';
+      document.getElementById('lang-toggle').onclick = () => {
+        lang = lang === 'en' ? 'zh' : 'en';
+        document.documentElement.lang = lang;
+        document.querySelector('[data-i18n="nav.fx"]').textContent = lang === 'en' ? 'FX' : '外汇';
+        document.querySelector('[data-i18n="fx.cpty"]').textContent = lang === 'en' ? 'Counterparty' : '交易对手';
+        document.querySelector('[data-i18n="fx.validation"]').textContent = lang === 'en' ? 'Invalid code' : '代码无效';
+      };
+      const input = document.getElementById('form:cpty.code');
+      input.addEventListener('input', () => {
+        document.getElementById('validation').classList.toggle('hidden', !input.value);
+      });
+    </script></body></html>"""
+    with _html_server(html) as (url, posts):
+        result = explore_target(url, tmp_path / depth, depth=depth)
+
+    assert result["status"] == "done"
+    assert posts == []
+    if depth == "thorough":
+        assert result["probe_results"]["form:cpty.code"]["reset_verified"] is True
 
 
 def test_thorough_without_isolation_skips_probes_and_writes_nothing(
