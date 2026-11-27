@@ -1,0 +1,259 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://enterprise-i18n-ops.local/contracts/corpus.schema.json",
+  "title": "Domain-Agnostic Corpus Manifest, Authority Policy, and Normalized Artifact Contracts",
+  "oneOf": [
+    { "$ref": "#/$defs/corpus_manifest" },
+    { "$ref": "#/$defs/authority_policy" },
+    { "$ref": "#/$defs/glossary_entry" },
+    { "$ref": "#/$defs/document_chunk" }
+  ],
+  "$defs": {
+    "corpus_manifest": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["contract_version", "artifact_kind", "snapshot_id", "documents"],
+      "properties": {
+        "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+        "artifact_kind": { "const": "corpus_manifest" },
+        "snapshot_id": { "type": "string", "minLength": 1 },
+        "industry_label": { "type": "string" },
+        "created_at": { "$ref": "common.schema.json#/$defs/iso_datetime" },
+        "documents": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": [
+              "doc_id",
+              "title",
+              "publisher",
+              "doc_version",
+              "format",
+              "rel_path",
+              "language_scope",
+              "domain_tags",
+              "region_scope",
+              "normative_level",
+              "content_kind",
+              "redistribution_status"
+            ],
+            "properties": {
+              "doc_id": { "$ref": "common.schema.json#/$defs/doc_id" },
+              "title": { "type": "string", "minLength": 1 },
+              "short_citation": { "type": "string", "minLength": 1 },
+              "publisher": { "type": "string", "minLength": 1 },
+              "doc_version": { "type": "string", "minLength": 1 },
+              "effective_date": {
+                "oneOf": [
+                  { "$ref": "common.schema.json#/$defs/iso_date" },
+                  { "type": "null" }
+                ]
+              },
+              "format": { "type": "string", "enum": ["pdf", "html", "xlsx", "csv"] },
+              "rel_path": { "$ref": "common.schema.json#/$defs/rel_posix_path" },
+              "file_sha256": {
+                "oneOf": [
+                  { "$ref": "common.schema.json#/$defs/sha256" },
+                  { "type": "null" }
+                ]
+              },
+              "language_scope": {
+                "type": "string",
+                "enum": ["bilingual_en_zh", "zh_only", "en_only"]
+              },
+              "target_locale": {
+                "oneOf": [
+                  { "$ref": "common.schema.json#/$defs/locale_code" },
+                  { "type": "null" }
+                ]
+              },
+              "domain_tags": {
+                "type": "array",
+                "minItems": 1,
+                "items": { "$ref": "common.schema.json#/$defs/domain_tag" }
+              },
+              "region_scope": { "$ref": "common.schema.json#/$defs/region_scope" },
+              "normative_level": { "$ref": "common.schema.json#/$defs/normative_level" },
+              "content_kind": {
+                "type": "string",
+                "enum": ["bilingual_glossary", "field_dictionary", "regulatory_standard", "reference_guide"]
+              },
+              "canonical_group": {
+                "type": ["string", "null"],
+                "description": "Shared identifier to deduplicate mirrors or bilingual editions of the same work."
+              },
+              "redistribution_status": {
+                "type": "string",
+                "enum": ["redistributable_fixture", "public_fetch_only", "local_private_only"]
+              },
+              "xlsx_columns": {
+                "type": "object",
+                "additionalProperties": { "type": "string" }
+              }
+            }
+          }
+        }
+      }
+    },
+    "authority_policy": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "artifact_kind",
+        "policy_version",
+        "normative_precedence",
+        "region_fallback_order",
+        "conflict_rules"
+      ],
+      "properties": {
+        "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+        "artifact_kind": { "const": "authority_policy" },
+        "policy_version": { "type": "string", "minLength": 1 },
+        "industry_label": { "type": "string" },
+        "normative_precedence": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/normative_level" },
+          "description": "Highest-to-lowest precedence applied ONLY among sources that pass domain/region/locale applicability screening."
+        },
+        "region_fallback_order": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/region_scope" }
+          },
+          "description": "Per target_region ordered list of acceptable fallback regions (e.g., CN_MAINLAND -> [CN_MAINLAND, GLOBAL])."
+        },
+        "domain_hierarchy": {
+          "type": "object",
+          "additionalProperties": {
+            "type": "array",
+            "items": { "$ref": "common.schema.json#/$defs/domain_tag" }
+          },
+          "description": "Optional parent/related domain mapping defined by the user's industry (e.g., fx -> [general_finance, general_ui])."
+        },
+        "conflict_rules": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": [
+            "preserve_regional_variants",
+            "forbid_en_only_as_target_translation",
+            "flag_same_scope_conflict"
+          ],
+          "properties": {
+            "preserve_regional_variants": { "type": "boolean" },
+            "forbid_en_only_as_target_translation": { "type": "boolean" },
+            "flag_same_scope_conflict": { "type": "boolean" }
+          }
+        }
+      }
+    },
+    "glossary_entry": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "artifact_kind",
+        "glossary_id",
+        "doc_id",
+        "doc_version",
+        "en_term",
+        "en_normalized",
+        "domain_tags",
+        "region_scope",
+        "normative_level",
+        "support_type",
+        "locator",
+        "excerpt_hash"
+      ],
+      "properties": {
+        "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+        "artifact_kind": { "const": "glossary_entry" },
+        "glossary_id": { "$ref": "common.schema.json#/$defs/glossary_id" },
+        "doc_id": { "$ref": "common.schema.json#/$defs/doc_id" },
+        "doc_version": { "type": "string", "minLength": 1 },
+        "en_term": { "type": "string", "minLength": 1 },
+        "en_normalized": { "type": "string", "minLength": 1 },
+        "en_aliases": {
+          "type": "array",
+          "items": { "type": "string", "minLength": 1 }
+        },
+        "zh_term": { "type": ["string", "null"] },
+        "zh_normalized": { "type": ["string", "null"] },
+        "target_locale": {
+          "oneOf": [
+            { "$ref": "common.schema.json#/$defs/locale_code" },
+            { "type": "null" }
+          ]
+        },
+        "definition": { "type": ["string", "null"] },
+        "field_code": { "type": ["string", "null"] },
+        "domain_tags": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/domain_tag" }
+        },
+        "region_scope": { "$ref": "common.schema.json#/$defs/region_scope" },
+        "normative_level": { "$ref": "common.schema.json#/$defs/normative_level" },
+        "support_type": { "$ref": "common.schema.json#/$defs/support_type" },
+        "locator": { "$ref": "common.schema.json#/$defs/locator" },
+        "excerpt": { "type": "string" },
+        "excerpt_hash": { "$ref": "common.schema.json#/$defs/sha256" },
+        "pairing_verified": { "type": "boolean", "default": true }
+      }
+    },
+    "document_chunk": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": [
+        "contract_version",
+        "artifact_kind",
+        "chunk_id",
+        "doc_id",
+        "doc_version",
+        "text_verbatim",
+        "text_normalized",
+        "language",
+        "domain_tags",
+        "region_scope",
+        "normative_level",
+        "support_type",
+        "locator",
+        "excerpt_hash"
+      ],
+      "properties": {
+        "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+        "artifact_kind": { "const": "document_chunk" },
+        "chunk_id": { "$ref": "common.schema.json#/$defs/chunk_id" },
+        "doc_id": { "$ref": "common.schema.json#/$defs/doc_id" },
+        "doc_version": { "type": "string", "minLength": 1 },
+        "parent_clause": { "type": ["string", "null"] },
+        "heading_path": {
+          "type": "array",
+          "items": { "type": "string" }
+        },
+        "text_verbatim": { "type": "string", "minLength": 1 },
+        "text_normalized": { "type": "string", "minLength": 1 },
+        "language": { "type": "string", "enum": ["en", "zh", "bilingual"] },
+        "target_locale": {
+          "oneOf": [
+            { "$ref": "common.schema.json#/$defs/locale_code" },
+            { "type": "null" }
+          ]
+        },
+        "domain_tags": {
+          "type": "array",
+          "minItems": 1,
+          "items": { "$ref": "common.schema.json#/$defs/domain_tag" }
+        },
+        "region_scope": { "$ref": "common.schema.json#/$defs/region_scope" },
+        "normative_level": { "$ref": "common.schema.json#/$defs/normative_level" },
+        "support_type": { "$ref": "common.schema.json#/$defs/support_type" },
+        "locator": { "$ref": "common.schema.json#/$defs/locator" },
+        "excerpt_hash": { "$ref": "common.schema.json#/$defs/sha256" }
+      }
+    }
+  }
+}

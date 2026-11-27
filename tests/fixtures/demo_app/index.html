@@ -1,0 +1,173 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <title>Demo B2B Treasury Portal (Sanitized Fixture)</title>
+  <style>
+    body { font-family: sans-serif; display: flex; margin: 0; }
+    nav { width: 220px; background: #f4f6f8; padding: 16px; min-height: 100vh; }
+    main { flex: 1; padding: 20px; }
+    .hidden { display: none; }
+    .err { color: #b71c1c; font-size: 13px; }
+    .topbar { display: flex; justify-content: space-between; margin-bottom: 16px; }
+  </style>
+</head>
+<body>
+  <nav aria-label="Main Menu">
+    <h3 data-i18n="nav.fx_group">FX Trading</h3>
+    <ul>
+      <li><button id="menu-fx-spot" data-menu="fx_spot" data-i18n="nav.fx_spot">Spot Deal Entry</button></li>
+    </ul>
+    <h3 data-i18n="nav.risk_group">Risk Management</h3>
+    <ul>
+      <li><button id="menu-risk-col" data-menu="risk_col" data-i18n="nav.risk_col">Collateral &amp; Netting</button></li>
+    </ul>
+  </nav>
+  <main>
+    <div class="topbar">
+      <h1 id="page-title" data-i18n="page.fx_spot.title">Spot Deal Entry</h1>
+      <div>
+        <button id="lang-toggle" type="button">Switch to 中文</button>
+      </div>
+    </div>
+
+    <section id="view-fx-spot">
+      <form id="spot-form" onsubmit="event.preventDefault(); triggerUnsafeSubmit();">
+        <div>
+          <label for="inp-cpty" data-i18n="fx.spot.counterparty">Counterparty</label>
+          <input id="inp-cpty" name="counterparty" placeholder="Enter counterparty code" onblur="triggerAutoSaveTrap()" />
+          <div id="err-cpty" class="err hidden" data-i18n="fx.spot.err_cpty">Counterparty code must be 4-12 uppercase letters.</div>
+        </div>
+        <div>
+          <label for="sel-tenor" data-i18n="fx.spot.tenor">Tenor</label>
+          <select id="sel-tenor">
+            <option value="SPOT" data-i18n="opt.spot">Spot</option>
+            <option value="1W" data-i18n="opt.1w">1W</option>
+            <option value="1M" data-i18n="opt.1m">1M</option>
+          </select>
+        </div>
+        <div>
+          <label for="inp-margin" data-i18n="fx.spot.margin">Margin</label>
+          <input id="inp-margin" name="margin" placeholder="e.g. 2.5 bps" />
+        </div>
+        <div>
+          <label data-i18n="fx.spot.settlement_instruction">Settlement Instruction</label>
+          <span id="lbl-si-hint" data-i18n="fx.spot.rate_formula_hint">=SpotRate + Margin</span>
+        </div>
+        <button id="btn-submit" type="submit" data-i18n="common.save">Save</button>
+        <button id="btn-reset" type="button" onclick="resetSpotForm()" data-i18n="common.reset">Reset</button>
+      </form>
+    </section>
+
+    <section id="view-risk-col" class="hidden">
+      <div>
+        <label data-i18n="risk.collateral.margin">Margin</label>
+        <label data-i18n="risk.agreement.netting">Netting</label>
+      </div>
+    </section>
+  </main>
+
+  <script>
+    const DICT = {
+      en: {
+        "nav.fx_group": "FX Trading",
+        "nav.fx_spot": "Spot Deal Entry",
+        "nav.risk_group": "Risk Management",
+        "nav.risk_col": "Collateral & Netting",
+        "page.fx_spot.title": "Spot Deal Entry",
+        "fx.spot.counterparty": "Counterparty",
+        "fx.spot.err_cpty": "Counterparty code must be 4-12 uppercase letters.",
+        "fx.spot.tenor": "Tenor",
+        "opt.spot": "Spot",
+        "opt.1w": "1W",
+        "opt.1m": "1M",
+        "fx.spot.margin": "Margin",
+        "fx.spot.settlement_instruction": "Settlement Instruction",
+        "fx.spot.rate_formula_hint": "=SpotRate + Margin",
+        "common.save": "Save",
+        "common.reset": "Reset",
+        "risk.collateral.margin": "Margin",
+        "risk.agreement.netting": "Netting"
+      },
+      zh: {
+        "nav.fx_group": "外汇交易",
+        "nav.fx_spot": "即期簿记",
+        "nav.risk_group": "风险管理",
+        "nav.risk_col": "授信与保证金",
+        "page.fx_spot.title": "即期簿记",
+        "fx.spot.counterparty": "反对党",
+        "fx.spot.err_cpty": "交易对手代码须为4-12位大写字母。",
+        "fx.spot.tenor": "男高音",
+        "opt.spot": "即期",
+        "opt.1w": "1周",
+        "opt.1m": "1月",
+        "fx.spot.margin": "保证金",
+        "fx.spot.settlement_instruction": "fx.spot.settlement_instruction",
+        "fx.spot.rate_formula_hint": "=即期汇率 + 保证金",
+        "common.save": "保存",
+        "common.reset": "重置",
+        "risk.collateral.margin": "保证金",
+        "risk.agreement.netting": "净额计算"
+      }
+    };
+
+    let currentLang = "en";
+    function applyLang(lang) {
+      currentLang = lang;
+      document.documentElement.lang = lang === "zh" ? "zh-CN" : "en";
+      document.querySelectorAll("[data-i18n]").forEach((el) => {
+        const key = el.getAttribute("data-i18n");
+        if (DICT[lang][key] !== undefined) el.textContent = DICT[lang][key];
+      });
+      document.getElementById("lang-toggle").textContent = lang === "en" ? "Switch to 中文" : "Switch to EN";
+    }
+
+    document.getElementById("lang-toggle").addEventListener("click", () => {
+      applyLang(currentLang === "en" ? "zh" : "en");
+    });
+
+    document.getElementById("menu-fx-spot").addEventListener("click", () => {
+      document.getElementById("view-fx-spot").classList.remove("hidden");
+      document.getElementById("view-risk-col").classList.add("hidden");
+    });
+
+    document.getElementById("menu-risk-col").addEventListener("click", () => {
+      document.getElementById("view-fx-spot").classList.add("hidden");
+      document.getElementById("view-risk-col").classList.remove("hidden");
+    });
+
+    document.getElementById("inp-cpty").addEventListener("input", (e) => {
+      const val = e.target.value;
+      const err = document.getElementById("err-cpty");
+      if (val && !/^[A-Z]{4,12}$/.test(val)) {
+        err.classList.remove("hidden");
+      } else {
+        err.classList.add("hidden");
+      }
+    });
+
+    // Adversarial trap for Phase 2 thorough network isolation tests:
+    function triggerAutoSaveTrap() {
+      const val = document.getElementById("inp-cpty").value;
+      if (val) {
+        fetch("/api/autosave", {
+          method: "POST",
+          headers: { "Content-Type": "application/json" },
+          body: JSON.stringify({ counterparty: val })
+        }).catch(() => {});
+      }
+    }
+
+    function triggerUnsafeSubmit() {
+      fetch("/api/submit", { method: "POST" }).catch(() => {});
+    }
+
+    function resetSpotForm() {
+      document.getElementById("spot-form").reset();
+      document.getElementById("err-cpty").classList.add("hidden");
+    }
+
+    applyLang("en");
+  </script>
+</body>
+</html>

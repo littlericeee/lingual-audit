@@ -1,0 +1,127 @@
+{
+  "contract_version": "1.0.0",
+  "artifact_kind": "corpus_manifest",
+  "snapshot_id": "SNAP-FIXTURE-V0",
+  "created_at": "2026-11-27T00:00:00Z",
+  "documents": [
+    {
+      "doc_id": "DOC-CN-FX-2025",
+      "title": "Synthetic Mainland FX & Derivatives Terminology Guideline (2025)",
+      "short_citation": "CN-FX-2025",
+      "publisher": "Mainland FX Market Committee (Synthetic Fixture)",
+      "doc_version": "2025.1",
+      "effective_date": "2025-01-01",
+      "format": "html",
+      "rel_path": "regulator_guideline_cn.html",
+      "file_sha256": "6b8f5ec6c7f023ad644b43511e2fff59fbac72ed31b0d1783a916113c99c60fd",
+      "language_scope": "bilingual_en_zh",
+      "target_locale": "zh-CN",
+      "domain_tags": [
+        "fx",
+        "derivatives",
+        "risk_management"
+      ],
+      "region_scope": "CN_MAINLAND",
+      "normative_level": "official_regulation",
+      "content_kind": "regulatory_standard",
+      "canonical_group": "cn-fx-guideline",
+      "redistribution_status": "redistributable_fixture"
+    },
+    {
+      "doc_id": "DOC-HK-GLOSSARY-2025",
+      "title": "Synthetic Offshore HK Financial Glossary (2025)",
+      "short_citation": "HK-GLS-2025",
+      "publisher": "Offshore Financial Standards Body (Synthetic Fixture)",
+      "doc_version": "2025.1",
+      "effective_date": "2025-01-01",
+      "format": "html",
+      "rel_path": "offshore_glossary_hk.html",
+      "file_sha256": "0e5e01b4c4168ae6a5deccac867d34db31f3b814bb86ee90ee80efadcf5041f0",
+      "language_scope": "bilingual_en_zh",
+      "target_locale": "zh-HK",
+      "domain_tags": [
+        "fx",
+        "derivatives",
+        "risk_management"
+      ],
+      "region_scope": "HK",
+      "normative_level": "domain_glossary",
+      "content_kind": "bilingual_glossary",
+      "canonical_group": "hk-fin-glossary",
+      "redistribution_status": "redistributable_fixture"
+    },
+    {
+      "doc_id": "DOC-EN-RISK-ONLY",
+      "title": "Synthetic International Counterparty Risk Glossary (EN-Only)",
+      "short_citation": "INTL-RISK-EN",
+      "publisher": "International Risk Committee (Synthetic Fixture)",
+      "doc_version": "2024.2",
+      "effective_date": "2024-07-01",
+      "format": "html",
+      "rel_path": "en_only_standard.html",
+      "file_sha256": "41987d0d1f706726304dbbab3036af5da4d41dc2d4fb2645feacf4ec3eda2ca2",
+      "language_scope": "en_only",
+      "target_locale": null,
+      "domain_tags": [
+        "risk_management"
+      ],
+      "region_scope": "GLOBAL",
+      "normative_level": "international_standard",
+      "content_kind": "regulatory_standard",
+      "canonical_group": "intl-risk-defs",
+      "redistribution_status": "redistributable_fixture"
+    },
+    {
+      "doc_id": "DOC-PDF-GLOSSARY",
+      "title": "Synthetic Bilingual Financial Market Glossary (PDF 2025)",
+      "short_citation": "BILINGUAL-PDF-2025",
+      "publisher": "Market Infrastructure Standards (Synthetic Fixture)",
+      "doc_version": "2025.1",
+      "effective_date": "2025-02-01",
+      "format": "pdf",
+      "rel_path": "fx_bilingual_glossary.pdf",
+      "file_sha256": "208b790354dde6021975f2ff835741cf2c1824bef8a56fb634ac17ac15efe255",
+      "language_scope": "bilingual_en_zh",
+      "target_locale": "zh-CN",
+      "domain_tags": [
+        "fx",
+        "derivatives"
+      ],
+      "region_scope": "CN_MAINLAND",
+      "normative_level": "industry_standard",
+      "content_kind": "bilingual_glossary",
+      "canonical_group": "pdf-fx-glossary",
+      "redistribution_status": "redistributable_fixture"
+    },
+    {
+      "doc_id": "DOC-XLSX-FIELDS",
+      "title": "Synthetic ISO-Style Message Field Dictionary (XLSX 2025)",
+      "short_citation": "MSG-DICT-2025",
+      "publisher": "Cross-Border Messaging Standards (Synthetic Fixture)",
+      "doc_version": "SR2025",
+      "effective_date": "2025-03-01",
+      "format": "xlsx",
+      "rel_path": "iso_style_fields.xlsx",
+      "file_sha256": "ff0d3a90d526943c55c433d9601b7a6282b4f0e93712e56f345a5562bf8490f1",
+      "language_scope": "bilingual_en_zh",
+      "target_locale": "zh-CN",
+      "domain_tags": [
+        "fx",
+        "payments_messaging"
+      ],
+      "region_scope": "CN_MAINLAND",
+      "normative_level": "industry_standard",
+      "content_kind": "field_dictionary",
+      "canonical_group": "msg-field-dict",
+      "redistribution_status": "redistributable_fixture",
+      "xlsx_columns": {
+        "field_code": "FieldCode",
+        "en_term": "EnglishTerm",
+        "zh_term": "ChineseTerm",
+        "aliases": "Aliases",
+        "domain": "Domain",
+        "definition": "Definition"
+      }
+    }
+  ]
+}

@@ -1,0 +1,125 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://enterprise-i18n-ops.local/contracts/review.schema.json",
+  "title": "Structured Terminology Review Contract",
+  "type": "object",
+  "additionalProperties": false,
+  "required": [
+    "contract_version",
+    "run_id",
+    "corpus_snapshot_hash",
+    "policy_version",
+    "reviews",
+    "consistency_findings"
+  ],
+  "properties": {
+    "contract_version": { "$ref": "common.schema.json#/$defs/contract_version" },
+    "run_id": { "$ref": "common.schema.json#/$defs/run_id" },
+    "corpus_snapshot_hash": { "$ref": "common.schema.json#/$defs/sha256" },
+    "policy_version": { "type": "string", "minLength": 1 },
+    "reviews": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "item_id",
+          "menu_id",
+          "page_id",
+          "hierarchy_path",
+          "en_text",
+          "zh_text",
+          "suggested_zh",
+          "verdict",
+          "business_rationale",
+          "evidence_refs",
+          "human_review_status"
+        ],
+        "properties": {
+          "item_id": { "$ref": "common.schema.json#/$defs/item_id" },
+          "menu_id": { "$ref": "common.schema.json#/$defs/menu_id" },
+          "page_id": { "$ref": "common.schema.json#/$defs/page_id" },
+          "hierarchy_path": { "type": "string", "minLength": 1 },
+          "domain_tag": { "$ref": "common.schema.json#/$defs/domain_tag" },
+          "concept_id": {
+            "oneOf": [
+              { "$ref": "common.schema.json#/$defs/concept_id" },
+              { "type": "null" }
+            ]
+          },
+          "en_text": { "type": ["string", "null"] },
+          "zh_text": { "type": ["string", "null"] },
+          "suggested_zh": { "type": ["string", "null"] },
+          "verdict": { "$ref": "common.schema.json#/$defs/verdict" },
+          "business_rationale": {
+            "type": "string",
+            "description": "Business-first rationale explaining why change/attention is needed, with brief citation tag. Mandatory non-empty whenever verdict != '保留'."
+          },
+          "evidence_refs": {
+            "type": "array",
+            "items": {
+              "type": "object",
+              "additionalProperties": false,
+              "required": ["evidence_id", "doc_id", "doc_version", "excerpt_hash"],
+              "properties": {
+                "evidence_id": { "type": "string", "minLength": 1 },
+                "doc_id": { "$ref": "common.schema.json#/$defs/doc_id" },
+                "doc_version": { "type": "string", "minLength": 1 },
+                "short_citation": { "type": "string" },
+                "support_type": { "$ref": "common.schema.json#/$defs/support_type" },
+                "excerpt_hash": { "$ref": "common.schema.json#/$defs/sha256" },
+                "locator": { "$ref": "common.schema.json#/$defs/locator" }
+              }
+            }
+          },
+          "human_review_status": { "$ref": "common.schema.json#/$defs/human_review_status" }
+        },
+        "allOf": [
+          {
+            "if": {
+              "properties": {
+                "verdict": { "not": { "const": "保留" } }
+              },
+              "required": ["verdict"]
+            },
+            "then": {
+              "properties": {
+                "business_rationale": { "type": "string", "minLength": 4 }
+              }
+            }
+          }
+        ]
+      }
+    },
+    "consistency_findings": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "additionalProperties": false,
+        "required": [
+          "concept_key",
+          "domain_tag",
+          "distinct_zh_terms",
+          "item_ids",
+          "severity"
+        ],
+        "properties": {
+          "concept_key": { "type": "string", "minLength": 1 },
+          "domain_tag": { "$ref": "common.schema.json#/$defs/domain_tag" },
+          "distinct_zh_terms": {
+            "type": "array",
+            "minItems": 2,
+            "items": { "type": "string" }
+          },
+          "item_ids": {
+            "type": "array",
+            "minItems": 2,
+            "items": { "$ref": "common.schema.json#/$defs/item_id" }
+          },
+          "severity": { "type": "string", "enum": ["conflict", "advisory_polysemy"] },
+          "note": { "type": "string" }
+        }
+      }
+    }
+  }
+}

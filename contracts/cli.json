@@ -1,0 +1,78 @@
+{
+  "contract_version": "1.0.0",
+  "cli_entrypoint": "i18n-ops",
+  "exit_codes": {
+    "0": "success",
+    "2": "invalid_arguments",
+    "10": "contract_or_semantic_validation_failed",
+    "11": "policy_or_authorization_blocked",
+    "12": "integrity_or_citation_or_readback_failed",
+    "13": "optional_capability_missing",
+    "14": "sanitization_violation"
+  },
+  "verdict_fill_colors": {
+    "保留": { "fill_hex": "E8F5E9", "font_hex": "1B5E20" },
+    "建议修改": { "fill_hex": "FFF8E1", "font_hex": "8D6E00" },
+    "缺译": { "fill_hex": "FFEBEE", "font_hex": "B71C1C" },
+    "来源冲突": { "fill_hex": "FFF3E0", "font_hex": "E65100" },
+    "单语限制": { "fill_hex": "ECEFF1", "font_hex": "37474F" },
+    "待业务确认": { "fill_hex": "E3F2FD", "font_hex": "0D47A1" },
+    "待核对": { "fill_hex": "F3E5F5", "font_hex": "4A148C" }
+  },
+  "commands": {
+    "doctor": {
+      "status": "implemented",
+      "summary": "Probe Python runtime, SQLite FTS5, parsers, Excel engine, and optional Playwright/semantic dependencies without reading secrets."
+    },
+    "validate": {
+      "status": "implemented",
+      "summary": "Validate JSON artifacts against contracts/ schemas and cross-field semantic invariants."
+    },
+    "sanitize-check": {
+      "status": "implemented",
+      "summary": "Reject secret paths without opening them and scan allowed files for intranet IPs, personal paths, credentials, and blocklist terms."
+    },
+    "run": {
+      "status": "implemented",
+      "subcommands": ["init", "status", "resume"],
+      "summary": "Initialize, inspect, or safely resume an external audit workspace with atomic checkpointing and Markdown views."
+    },
+    "corpus": {
+      "status": "planned",
+      "planned_phase": "phase_1",
+      "subcommands": ["ingest", "index"],
+      "summary": "Parse PDF/HTML/XLSX corpus documents into normalized glossary entries and chunks, then build rebuildable SQLite FTS5 index."
+    },
+    "retrieve": {
+      "status": "planned",
+      "planned_phase": "phase_1",
+      "summary": "Query SQLite glossary + FTS5 (+ optional vector) using UI context and emit controlled evidence bundles."
+    },
+    "review": {
+      "status": "planned",
+      "planned_phase": "phase_1",
+      "subcommands": ["prepare", "ingest", "validate", "consistency"],
+      "summary": "Prepare evidence packets for host LLM review, ingest decisions, verify citation integrity, and run concept-scoped cross-menu consistency checks."
+    },
+    "export": {
+      "status": "planned",
+      "planned_phase": "phase_1",
+      "summary": "Export 6-column color-coded formula-safe Excel workbook with optional summary sheets and read-back verification."
+    },
+    "verify": {
+      "status": "planned",
+      "planned_phase": "phase_1",
+      "summary": "Verify end-to-end delivery integrity, workbook read-back, row hashes, and coverage reconciliation."
+    },
+    "evaluate": {
+      "status": "planned",
+      "planned_phase": "phase_1",
+      "summary": "Run golden-set evaluation and ablation comparisons across retrieval modes."
+    },
+    "explore": {
+      "status": "planned",
+      "planned_phase": "phase_2",
+      "summary": "Run policy-constrained Playwright bilingual UI discovery with network isolation during thorough synthetic input probes."
+    }
+  }
+}

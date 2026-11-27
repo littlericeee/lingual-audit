@@ -1,0 +1,37 @@
+[build-system]
+requires = ["setuptools>=68.0"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "enterprise-i18n-ops"
+version = "0.1.0"
+description = "Enterprise-grade bilingual UI inventory, terminology standardization, and tiered hybrid RAG audit workflow for complex B2B web systems."
+readme = "README.md"
+requires-python = ">=3.11"
+license = { text = "MIT" }
+dependencies = [
+  "jsonschema>=4.10",
+  "PyYAML>=6.0",
+  "pdfplumber>=0.11",
+  "beautifulsoup4>=4.12",
+  "openpyxl>=3.1",
+]
+
+[project.optional-dependencies]
+browser = ["playwright>=1.45"]
+semantic = ["numpy>=1.26", "sentence-transformers>=3.0"]
+dev = ["pytest>=8.0", "ruff>=0.6"]
+
+[project.scripts]
+i18n-ops = "enterprise_i18n_ops.cli:main"
+
+[tool.setuptools.packages.find]
+where = ["src"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+pythonpath = ["src"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py311"
