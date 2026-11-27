@@ -1,0 +1,86 @@
+{
+  "contract_version": "1.0.0",
+  "artifact_kind": "page_inventory",
+  "page_id": "PG-000002",
+  "menu_id": "MN-0004",
+  "menu_hierarchy_zh": ["风险管理", "授信与保证金"],
+  "menu_hierarchy_en": ["Risk Management", "Collateral & Netting"],
+  "domain_tag": "risk_management",
+  "observed_at": "2026-11-27T00:00:00Z",
+  "role_alias": "auditor_readonly",
+  "app_version": "demo-1.0.0",
+  "coverage_status": "fully_inspected",
+  "states": [
+    {
+      "state_id": "ST-000003",
+      "name": "保证金与净额协议页",
+      "parent_condition": null,
+      "iframe_context": null,
+      "reproduce_steps": ["点击 风险管理 -> 授信与保证金"],
+      "coverage_status": "fully_inspected",
+      "blocker_reason": null
+    }
+  ],
+  "items": [
+    {
+      "item_id": "UI-000007",
+      "control_id": "CTL-000007",
+      "state_id": "ST-000003",
+      "hierarchy_path": "风险管理 > 授信与保证金 > 抵押品区 > 保证金",
+      "control_type": "label",
+      "text_kind": "label",
+      "en_status": "observed",
+      "zh_status": "observed",
+      "en_text": "Margin",
+      "zh_text": "保证金",
+      "i18n_key_or_code": "risk.collateral.margin",
+      "pairing_method": "stable_key_or_code",
+      "sibling_labels": ["Initial Margin", "Variation Margin", "Netting"]
+    },
+    {
+      "item_id": "UI-000008",
+      "control_id": "CTL-000008",
+      "state_id": "ST-000003",
+      "hierarchy_path": "风险管理 > 授信与保证金 > 主协议区 > 净额结算",
+      "control_type": "label",
+      "text_kind": "label",
+      "en_status": "observed",
+      "zh_status": "observed",
+      "en_text": "Netting",
+      "zh_text": "净额计算",
+      "i18n_key_or_code": "risk.agreement.netting",
+      "pairing_method": "stable_key_or_code",
+      "sibling_labels": ["Counterparty", "Master Agreement", "Derivatives"]
+    },
+    {
+      "item_id": "UI-000009",
+      "control_id": "CTL-000009",
+      "state_id": "ST-000003",
+      "hierarchy_path": "风险管理 > 授信与保证金 > 主协议区 > 交易对手",
+      "control_type": "label",
+      "text_kind": "label",
+      "en_status": "observed",
+      "zh_status": "observed",
+      "en_text": "Counterparty",
+      "zh_text": "交易对手方",
+      "i18n_key_or_code": "risk.agreement.counterparty",
+      "pairing_method": "stable_key_or_code",
+      "sibling_labels": ["Netting", "Haircut"]
+    },
+    {
+      "item_id": "UI-000010",
+      "control_id": "CTL-000010",
+      "state_id": "ST-000003",
+      "hierarchy_path": "风险管理 > 授信与保证金 > 高级配置 > 合成信用叠加",
+      "control_type": "label",
+      "text_kind": "label",
+      "en_status": "observed",
+      "zh_status": "observed",
+      "en_text": "Synthetic Credit Overlay",
+      "zh_text": "综合信用覆盖",
+      "i18n_key_or_code": "risk.adv.synthetic_overlay",
+      "pairing_method": "stable_key_or_code",
+      "sibling_labels": ["Novation", "Haircut"]
+    }
+  ]
+}

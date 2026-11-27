@@ -25,8 +25,8 @@ data/index/
 *.sqlite3
 *.faiss
 *.index
-records/
-deliverables/
+/records/
+/deliverables/
 
 # Python cache, virtualenvs, and build artifacts
 __pycache__/
