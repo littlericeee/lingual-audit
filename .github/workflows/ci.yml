@@ -1,0 +1,43 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  test:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.11", "3.12"]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+          cache: pip
+      - run: pip install -e ".[dev]"
+      - run: ruff check src tests examples
+      - run: pytest -v -p no:anyio -k "not demo_server"
+      - run: lingual-audit sanitize-check .
+      - name: Run offline synthetic demo
+        run: |
+          mkdir -p /tmp/ci-demo
+          lingual-audit corpus ingest --manifest tests/fixtures/corpus/manifest.json --output-dir /tmp/ci-demo/normalized
+          lingual-audit corpus index --normalized-dir /tmp/ci-demo/normalized --db-path /tmp/ci-demo/index.sqlite
+          lingual-audit review prepare --db-path /tmp/ci-demo/index.sqlite --records-dir tests/fixtures/records --output /tmp/ci-demo/packets.json --policy tests/fixtures/corpus/authority_policy.json
+          python3 examples/build_demo_review.py /tmp/ci-demo/packets.json /tmp/ci-demo/review.json
+          lingual-audit review validate --review-file /tmp/ci-demo/review.json --db-path /tmp/ci-demo/index.sqlite --records-dir tests/fixtures/records --packets /tmp/ci-demo/packets.json
+          lingual-audit review consistency --review-file /tmp/ci-demo/review.json
+          lingual-audit export --menu-map tests/fixtures/records/menu-map.json --review-file /tmp/ci-demo/review.json --output-xlsx /tmp/ci-demo/audit.xlsx --manifest-output /tmp/ci-demo/delivery-manifest.json --with-summary
+          lingual-audit verify --workbook /tmp/ci-demo/audit.xlsx --manifest /tmp/ci-demo/delivery-manifest.json --review-file /tmp/ci-demo/review.json
+      - name: Build and install wheel
+        run: |
+          pip wheel --no-deps --no-build-isolation -w /tmp/wheel-dist .
+          python -m venv /tmp/wheel-venv
+          /tmp/wheel-venv/bin/pip install /tmp/wheel-dist/*.whl
+      - name: Verify packaged schemas outside repository
+        working-directory: /tmp
+        run: |
+          /tmp/wheel-venv/bin/lingual-audit validate --kind menu_map "$GITHUB_WORKSPACE/tests/fixtures/records/menu-map.json"
