@@ -148,16 +148,18 @@ def _stub_playwright(
     contexts: list[_FakeContext],
     snapshots: list[dict[str, dict[str, object]]],
 ) -> None:
-    import playwright.sync_api
+    import sys
+    import types
 
     from lingual_audit.explore import runner
 
     browser = _FakeBrowser(contexts)
-    monkeypatch.setattr(
-        playwright.sync_api,
-        "sync_playwright",
-        lambda: _FakePlaywrightManager(browser),
-    )
+    fake_sync_api = types.ModuleType("playwright.sync_api")
+    fake_sync_api.sync_playwright = lambda: _FakePlaywrightManager(browser)  # type: ignore[attr-defined]
+    fake_playwright = types.ModuleType("playwright")
+    fake_playwright.sync_api = fake_sync_api  # type: ignore[attr-defined]
+    monkeypatch.setitem(sys.modules, "playwright", fake_playwright)
+    monkeypatch.setitem(sys.modules, "playwright.sync_api", fake_sync_api)
     monkeypatch.setattr(runner, "_wait_for_stability", lambda page: None)
     monkeypatch.setattr(runner, "_switch_language", lambda page, language: None)
     snapshot_iter = iter(snapshots)
