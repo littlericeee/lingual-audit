@@ -1,4 +1,3 @@
-#!/usr/bin/env python3
 """Build a deterministic synthetic review from prepared evidence packets."""
 
 from __future__ import annotations
