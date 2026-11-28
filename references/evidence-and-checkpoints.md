@@ -17,8 +17,9 @@ All runtime files live inside the external workspace (`--workspace <dir>`):
     review.json                # Structured terminology decisions & consistency findings
   corpus/
     raw/                       # User-supplied PDF/HTML/XLSX/CSV glossaries & standards (BYOG)
+    web_cache/                 # Locally cached L2 web evidence files added via `corpus add-web`
     manifest.json              # Document metadata, domain tags, region, normative level & SHA-256
-    authority_policy.json      # Config-driven applicability & precedence policy
+    authority_policy.json      # Config-driven applicability, precedence & web domain tiers
     normalized/                # Deterministic parsed JSONL artifacts
     index.sqlite               # Rebuildable SQLite + FTS5 + CJK bigram index
   deliverables/
@@ -42,12 +43,16 @@ All runtime files live inside the external workspace (`--workspace <dir>`):
   - `registered_only`: Entry discovered in navigation or DOM, not yet opened.
   - `fully_inspected`: All safe states and static options verified to the end.
   - `partially_inspected`: Some controls or options inspected; remaining gaps documented with blocker reasons.
-  - `blocked`: Cannot be safely inspected (for example, permission limit, auto-save risk without isolation, or reset failure).
+  - `blocked`: Cannot be safely inspected (for example, permission limit, auto-save risk without isolation, reset failure, or 0 items matched by built-in selectors).
 - **Strict denominator rule**: Never count `blocked` or `skipped` units as completed coverage.
 
-## 3. Atomic checkpointing and safe resume
+## 3. Incremental per-module persistence and safe resume
 
-- Every JSON and SQLite write uses same-directory temporary file staging, `fsync`, and atomic `os.replace()` under a single-writer convention (which matters on Windows and WSL DrvFS mounts).
-- Run `lingual-audit run resume --workspace <dir>` after any interruption:
+- **Write and append after every module**: Do not hold dozens of menus in conversation context until the end of the run. As soon as you finish one feature module (menu):
+  1. Write and validate its `records/pages/<page_id>.json` and update its entry in `records/menu-map.json`.
+  2. Prepare packets, review that module, validate citations, and merge its decisions into `records/review.json`.
+  3. Re-run `lingual-audit export` and `lingual-audit verify` so `deliverables/audit.xlsx` immediately includes that module's sheet; each subsequent module appends into the same ledger and workbook.
+- **Atomic writes**: Every JSON and SQLite write uses same-directory temporary file staging, `fsync`, and atomic `os.replace()` under a single-writer convention (which matters on Windows and WSL DrvFS mounts).
+- **Safe resume**: Run `lingual-audit run resume --workspace <dir>` after any interruption:
   1. Any task unit left in `running` state is reset to `pending` with a reminder to re-check clean UI state. Never replay interrupted synthetic input actions automatically.
   2. Corpus manifest and snapshot hashes are checked. If reference documents or policies changed, downstream reviews are flagged for re-validation so stale conclusions cannot stay in place silently.
