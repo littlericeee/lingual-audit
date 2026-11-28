@@ -17,29 +17,34 @@
 git clone <repo-url>
 cd lingual-audit
 
-python3 -m venv --system-site-packages .venv
-.venv/bin/pip install -e ".[dev,browser]"
+python -m venv .venv
+source .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
+python -m pip install -e ".[dev,browser]"
 ```
 
-如果要跑 Playwright 浏览器集成测试，需要安装 `playwright>=1.48` 及对应的 Chromium 浏览器。
+如果要跑 `explore` 或 Playwright 浏览器集成测试，需要安装 `playwright>=1.48` 并下载 Chromium：
+
+```bash
+python -m playwright install chromium
+```
 
 ## 提交 PR 前跑一遍检查
 
 ```bash
 # 代码风格检查
-.venv/bin/ruff check src tests
+ruff check src tests examples
 
 # 单元测试与契约测试
-.venv/bin/pytest -v -p no:anyio
+pytest -v -p no:anyio
 
 # 脱敏与敏感路径扫描（需返回 clean: true）
-.venv/bin/lingual-audit sanitize-check .
+lingual-audit sanitize-check .
 ```
 
 如果改了 `pyproject.toml` 或 `contracts/*.schema.json`，顺手打个 wheel 确认 Schema 都打进去了：
 
 ```bash
-.venv/bin/python3 -m pip wheel --no-deps --no-build-isolation -w /tmp/wheel-check .
+python -m pip wheel --no-deps -w dist .
 ```
 
 ## 提交前需要注意的几件事

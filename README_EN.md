@@ -74,10 +74,16 @@ flowchart TD
 ### 1. Install and check your environment
 
 ```bash
-# Works as an editable source install or a standalone wheel
-python3 -m venv --system-site-packages .venv
-.venv/bin/pip install -e ".[dev,browser]"
-.venv/bin/lingual-audit doctor --json
+# Create and activate an isolated virtualenv (works as editable source install or standalone wheel)
+python -m venv .venv
+source .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
+
+python -m pip install -e ".[dev,browser]"
+
+# Required before running `explore` or the full browser test suite
+python -m playwright install chromium
+
+lingual-audit doctor --json
 ```
 
 ### 2. Run the end-to-end synthetic demo (from corpus to verified Excel)

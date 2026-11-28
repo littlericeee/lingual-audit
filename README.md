@@ -83,10 +83,16 @@ flowchart TD
 ### 1. 安装并检查环境
 
 ```bash
-# 支持源码 editable 安装，也支持构建 wheel 后在仓库外直接运行
-python3 -m venv --system-site-packages .venv
-.venv/bin/pip install -e ".[dev,browser]"
-.venv/bin/lingual-audit doctor --json
+# 创建并激活独立虚拟环境（支持源码 editable 安装，也支持构建 wheel 后在仓库外直接运行）
+python -m venv .venv
+source .venv/bin/activate  # Windows PowerShell: .venv\Scripts\Activate.ps1
+
+python -m pip install -e ".[dev,browser]"
+
+# 如果需要运行 explore 或完整浏览器测试，还需安装 Chromium
+python -m playwright install chromium
+
+lingual-audit doctor --json
 ```
 
 ### 2. 用内置合成样例跑通完整流程（直出 Excel）
