@@ -34,7 +34,7 @@ jobs:
           lingual-audit verify --workbook /tmp/ci-demo/audit.xlsx --manifest /tmp/ci-demo/delivery-manifest.json --review-file /tmp/ci-demo/review.json
       - name: Build and install wheel
         run: |
-          pip wheel --no-deps --no-build-isolation -w /tmp/wheel-dist .
+          python -m pip wheel --no-deps -w /tmp/wheel-dist .
           python -m venv /tmp/wheel-venv
           /tmp/wheel-venv/bin/pip install /tmp/wheel-dist/*.whl
       - name: Verify packaged schemas outside repository

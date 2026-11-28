@@ -7,6 +7,7 @@ from pathlib import Path
 
 import pytest
 
+from lingual_audit import doctor
 from lingual_audit.cli import main
 from lingual_audit.contracts import (
     CONTRACT_VERSION,
@@ -344,3 +345,41 @@ def test_cli_phase0_commands(tmp_path: Path, capsys) -> None:
     assert st_out["industry_label"] == "healthcare_ehr"
     assert len(VERDICT_STYLES) == 6
     assert "待" + "业务确认" not in VERDICT_STYLES
+
+
+def test_doctor_reports_missing_playwright_chromium(
+    tmp_path: Path, monkeypatch: pytest.MonkeyPatch
+) -> None:
+    if not doctor._probe_module("playwright")["available"]:
+        pytest.skip("playwright package is not installed")
+
+    monkeypatch.setenv("PLAYWRIGHT_BROWSERS_PATH", str(tmp_path / "empty-browsers"))
+
+    report = doctor.collect_doctor_report()
+
+    assert report["browser"]["playwright_installed"] is True
+    assert report["browser"]["chromium_ready"] is False
+    assert report["capabilities"]["browser_exploration_ready"] is False
+    assert "playwright install chromium" in report["browser"]["install_hint"]
+
+
+def test_doctor_reports_ready_playwright_chromium(
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    monkeypatch.setattr(
+        doctor,
+        "_probe_playwright_chromium",
+        lambda playwright_installed: {
+            "playwright_installed": playwright_installed,
+            "chromium_ready": True,
+            "chromium_executable": "/synthetic/playwright/chromium",
+            "error": None,
+            "install_hint": None,
+        },
+    )
+
+    report = doctor.collect_doctor_report()
+
+    assert report["browser"]["chromium_ready"] is True
+    assert report["capabilities"]["browser_exploration_ready"] is True
+    assert report["browser"]["install_hint"] is None

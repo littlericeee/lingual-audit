@@ -43,7 +43,13 @@ def _cmd_doctor(args: argparse.Namespace) -> int:
         print(f"Python: {report['python_version']}")
         print(f"SQLite: {report['sqlite']['sqlite_version']} (FTS5={report['sqlite']['fts5_available']})")
         print(f"Offline Core Ready: {report['capabilities']['offline_core_ready']}")
+        print(f"Playwright Installed: {report['browser']['playwright_installed']}")
         print(f"Browser Exploration Ready: {report['capabilities']['browser_exploration_ready']}")
+        if (
+            not report["capabilities"]["browser_exploration_ready"]
+            and report.get("browser", {}).get("install_hint")
+        ):
+            print(f"Browser Install Hint: {report['browser']['install_hint']}")
         print(f"Semantic Vector Ready: {report['capabilities']['semantic_vector_ready']}")
     return EXIT_CODES["success"]
 
