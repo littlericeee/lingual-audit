@@ -80,15 +80,47 @@ flowchart TD
 
 ## 快速上手
 
+### 1. 安装并检查环境
+
 ```bash
-# 1. 创建虚拟环境并安装（支持源码 editable 安装，也支持构建 wheel 后在仓库外直接运行）
+# 支持源码 editable 安装，也支持构建 wheel 后在仓库外直接运行
 python3 -m venv --system-site-packages .venv
 .venv/bin/pip install -e ".[dev,browser]"
-
-# 2. 探测本机运行能力
 .venv/bin/lingual-audit doctor --json
+```
 
-# 3. 初始化外部工作区（自动生成空白 BYOG 术语库槽位与默认策略）
+### 2. 用内置合成样例跑通完整流程（直出 Excel）
+
+仓库自带脱敏合成样例（`tests/fixtures/`），不依赖外部网络或真实系统，直接复制下面命令就能从建库一路跑出 6 列着色 Excel 并完成回读验收：
+
+```bash
+mkdir -p /tmp/lingual-audit-demo
+
+# 解析合成语料并建立 SQLite FTS5 索引
+.venv/bin/lingual-audit corpus ingest --manifest tests/fixtures/corpus/manifest.json --output-dir /tmp/lingual-audit-demo/normalized
+.venv/bin/lingual-audit corpus index --normalized-dir /tmp/lingual-audit-demo/normalized --db-path /tmp/lingual-audit-demo/index.sqlite
+
+# 为合成界面词条生成受控证据包
+.venv/bin/lingual-audit review prepare --db-path /tmp/lingual-audit-demo/index.sqlite --records-dir tests/fixtures/records --output /tmp/lingual-audit-demo/packets.json --policy tests/fixtures/corpus/authority_policy.json
+
+# 用离线示例脚本模拟宿主 LLM 输出审译结果
+.venv/bin/python3 examples/build_demo_review.py /tmp/lingual-audit-demo/packets.json /tmp/lingual-audit-demo/review.json
+
+# 证据包级引用核验 + 跨菜单一致性检查
+.venv/bin/lingual-audit review validate --review-file /tmp/lingual-audit-demo/review.json --db-path /tmp/lingual-audit-demo/index.sqlite --records-dir tests/fixtures/records --packets /tmp/lingual-audit-demo/packets.json
+.venv/bin/lingual-audit review consistency --review-file /tmp/lingual-audit-demo/review.json
+
+# 导出 6 列着色 Excel（附 _Summary / _Consistency）并执行自动回读验收
+.venv/bin/lingual-audit export --menu-map tests/fixtures/records/menu-map.json --review-file /tmp/lingual-audit-demo/review.json --output-xlsx /tmp/lingual-audit-demo/audit.xlsx --manifest-output /tmp/lingual-audit-demo/delivery-manifest.json --with-summary
+.venv/bin/lingual-audit verify --workbook /tmp/lingual-audit-demo/audit.xlsx --manifest /tmp/lingual-audit-demo/delivery-manifest.json --review-file /tmp/lingual-audit-demo/review.json
+```
+
+跑完后打开 `/tmp/lingual-audit-demo/audit.xlsx` 就能看到按菜单分 Sheet 的 6 列着色审查表，且 `verify` 会返回 `"verified": true`。
+
+### 3. 初始化你自己的工作区（可选）
+
+```bash
+# 初始化外部工作区（自动生成空白 BYOG 术语库目录与默认策略）
 .venv/bin/lingual-audit run init \
   --workspace /tmp/my-audit-ws \
   --run-id RUN-20261127-0001 \
@@ -96,8 +128,7 @@ python3 -m venv --system-site-packages .venv
   --industry "general_web" \
   --depth standard
 
-# 4. 将本领域的 PDF/HTML/XLSX/CSV 放入 /tmp/my-audit-ws/corpus/raw/ 并在 manifest.json 登记
-#    本地库缺失时，也可以随时用 corpus add-web 录入联网查证的网页摘录：
+# 本地库缺失时，随时用 corpus add-web 录入联网查证的网页摘录
 .venv/bin/lingual-audit corpus add-web \
   --manifest /tmp/my-audit-ws/corpus/manifest.json \
   --url "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Idempotency-Key" \
@@ -107,11 +138,7 @@ python3 -m venv --system-site-packages .venv
   --excerpt "Idempotency Key ensures repeated requests have the same effect as a single request." \
   --policy /tmp/my-audit-ws/corpus/authority_policy.json
 
-# 5. 解析语料并重建 SQLite FTS5 索引
-.venv/bin/lingual-audit corpus ingest --manifest /tmp/my-audit-ws/corpus/manifest.json --output-dir /tmp/my-audit-ws/corpus/normalized
-.venv/bin/lingual-audit corpus index --normalized-dir /tmp/my-audit-ws/corpus/normalized --db-path /tmp/my-audit-ws/corpus/index.sqlite
-
-# 6. 运行确定性测试集
+# 运行确定性测试集
 .venv/bin/pytest -v -p no:anyio
 ```
 

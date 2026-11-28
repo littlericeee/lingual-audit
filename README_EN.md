@@ -71,15 +71,47 @@ flowchart TD
 
 ## Quick start
 
+### 1. Install and check your environment
+
 ```bash
-# 1. Create virtualenv & install (editable source install or standalone wheel)
+# Works as an editable source install or a standalone wheel
 python3 -m venv --system-site-packages .venv
 .venv/bin/pip install -e ".[dev,browser]"
-
-# 2. Check runtime capabilities
 .venv/bin/lingual-audit doctor --json
+```
 
-# 3. Initialize an external BYOG workspace for any domain
+### 2. Run the end-to-end synthetic demo (from corpus to verified Excel)
+
+This repo includes sanitized synthetic fixtures under `tests/fixtures/` so you can run the full workflow offline and inspect the generated workbook right away:
+
+```bash
+mkdir -p /tmp/lingual-audit-demo
+
+# Ingest the synthetic corpus and build the SQLite FTS5 index
+.venv/bin/lingual-audit corpus ingest --manifest tests/fixtures/corpus/manifest.json --output-dir /tmp/lingual-audit-demo/normalized
+.venv/bin/lingual-audit corpus index --normalized-dir /tmp/lingual-audit-demo/normalized --db-path /tmp/lingual-audit-demo/index.sqlite
+
+# Prepare controlled evidence packets for the sample UI inventories
+.venv/bin/lingual-audit review prepare --db-path /tmp/lingual-audit-demo/index.sqlite --records-dir tests/fixtures/records --output /tmp/lingual-audit-demo/packets.json --policy tests/fixtures/corpus/authority_policy.json
+
+# Simulate the host LLM review step using the offline demo helper
+.venv/bin/python3 examples/build_demo_review.py /tmp/lingual-audit-demo/packets.json /tmp/lingual-audit-demo/review.json
+
+# Run packet-bound citation validation and cross-menu consistency checks
+.venv/bin/lingual-audit review validate --review-file /tmp/lingual-audit-demo/review.json --db-path /tmp/lingual-audit-demo/index.sqlite --records-dir tests/fixtures/records --packets /tmp/lingual-audit-demo/packets.json
+.venv/bin/lingual-audit review consistency --review-file /tmp/lingual-audit-demo/review.json
+
+# Export the 6-column color-coded Excel workbook and verify read-back
+.venv/bin/lingual-audit export --menu-map tests/fixtures/records/menu-map.json --review-file /tmp/lingual-audit-demo/review.json --output-xlsx /tmp/lingual-audit-demo/audit.xlsx --manifest-output /tmp/lingual-audit-demo/delivery-manifest.json --with-summary
+.venv/bin/lingual-audit verify --workbook /tmp/lingual-audit-demo/audit.xlsx --manifest /tmp/lingual-audit-demo/delivery-manifest.json --review-file /tmp/lingual-audit-demo/review.json
+```
+
+Open `/tmp/lingual-audit-demo/audit.xlsx` to inspect the color-coded menu sheets, `_Summary`, and `_Consistency`. The final `verify` command outputs `"verified": true`.
+
+### 3. Initialize your own BYOG workspace (optional)
+
+```bash
+# Initialize an external workspace with an empty BYOG corpus slot
 .venv/bin/lingual-audit run init \
   --workspace /tmp/my-audit-ws \
   --run-id RUN-20261127-0001 \
@@ -87,8 +119,7 @@ python3 -m venv --system-site-packages .venv
   --industry "general_web" \
   --depth standard
 
-# 4. Drop your PDF/HTML/XLSX/CSV glossaries under /tmp/my-audit-ws/corpus/raw/
-#    and optionally record web-searched excerpts with `corpus add-web`:
+# Optionally record web-searched excerpts whenever your local glossary misses a term
 .venv/bin/lingual-audit corpus add-web \
   --manifest /tmp/my-audit-ws/corpus/manifest.json \
   --url "https://developer.mozilla.org/en-US/docs/Web/HTTP/Headers/Idempotency-Key" \
@@ -98,11 +129,7 @@ python3 -m venv --system-site-packages .venv
   --excerpt "Idempotency Key ensures repeated requests have the same effect as a single request." \
   --policy /tmp/my-audit-ws/corpus/authority_policy.json
 
-# 5. Ingest and index the corpus
-.venv/bin/lingual-audit corpus ingest --manifest /tmp/my-audit-ws/corpus/manifest.json --output-dir /tmp/my-audit-ws/corpus/normalized
-.venv/bin/lingual-audit corpus index --normalized-dir /tmp/my-audit-ws/corpus/normalized --db-path /tmp/my-audit-ws/corpus/index.sqlite
-
-# 6. Run deterministic test suite
+# Run deterministic test suite
 .venv/bin/pytest -v -p no:anyio
 ```
 
