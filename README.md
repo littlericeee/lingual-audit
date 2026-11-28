@@ -2,7 +2,7 @@
 
 # lingual-audit
 
-### 面向复杂 Web 系统的双语界面审译 Agent Skill 与本地混合检索工具链
+面向复杂 Web 系统的双语界面审译 Agent Skill 与本地混合检索工具
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agent Skill](https://img.shields.io/badge/Agent%20Skill-Self--Contained-blue.svg)](SKILL.md)
@@ -12,38 +12,32 @@
 
 <br>
 
-几百个页面里攒了几千条错译、漏译和裸露 i18n Key，靠人一页页翻要花好几周？<br>
-把行业规范 PDF 直接丢给大模型审译，却总碰到短词漏召回、编造出处、前后菜单译法打架？<br>
-想让 Agent 帮着点页面查校验提示，又怕误触表单自动保存往后端写脏数据？<br>
-
-<br>
-
-**行业无关 · 自带术语库（BYOG） · 三层证据校验 · 按模块增量交付 · 6 列着色 Excel**
-
-[English](README_EN.md) · [对比](#为什么不用裸大模型直接审) · [主要功能](#主要功能) · [工作流](#工作流总览) · [Excel 规范](#6-列-excel-交付规范) · [快速上手](#快速上手) · [贡献指南](CONTRIBUTING.md)
+[English](README_EN.md) · [区别对比](#和直接让大模型审译的区别) · [主要功能](#主要功能) · [工作流](#工作流总览) · [Excel 规范](#6-列-excel-交付规范) · [快速上手](#快速上手) · [参与贡献](CONTRIBUTING.md)
 
 </div>
 
-`lingual-audit` 把界面审译里的两件事拆开了：语义判断交给大模型，词条建库、本地混合检索、证据包级引用核验和 Excel 回读验收全部交给确定性 Python 工具来做。你可以接入任意行业的本地术语库，配合联网查证落盘和大模型语言判断，按功能模块边审边导出可交付的 6 列着色 Excel 审查表。
+`lingual-audit` 是一个面向复杂 Web 系统的双语界面审译工具，包含一套自包含的 Agent Skill 和对应的 Python 命令行工具。它可以把运行中系统的中英文界面词条盘点出来，结合本地自带术语库、联网查证缓存和大模型语言判断完成审译与引用核验，最后按模块增量导出带颜色标注、防公式注入的 6 列 Excel 审查表。
 
-## 为什么不用裸大模型直接审
+金融、医疗、制造、SaaS、电商、开发者平台这类复杂 Web 系统，跑久了通常会在几百个页面里攒下几千条错译、漏译、裸露 i18n Key 或跨菜单译名不统一的问题。靠人一页页翻查往往要花好几周；直接把几本参考 PDF 丢给大模型看，又容易漏掉短词、编造出处、前后菜单译法打架，甚至在点页面时误触表单自动保存。`lingual-audit` 把这两件事拆开了：语言判断交给大模型，本地检索、引用核验和 Excel 回读全部交给确定性脚本来做。
+
+## 和直接让大模型审译的区别
 
 | 直接把参考 PDF 丢给大模型 | `lingual-audit` |
 |---|---|
-| 2–3 字母缩写和短中文词经常漏召回 | 精确词表通道 + SQLite FTS5 + CJK 二元组离线检索 |
-| 模型偶尔编造页码、条款号或乱引无关条目 | `review validate` 绑定 `packets.json` 证据包逐条核验哈希 |
-| 英文单语定义被拿来硬套中文译名 | 适用性优先过滤，机械拦截英文单语证据授权中文改译 |
-| 扫完几百页才出表，中途断了容易前功尽弃 | 每完成一个功能模块即落盘并增量导出到 Excel |
-| 审译与验收混在一起，表里公式和原词难核对 | 6 列着色纯文本防公式注入，导出后自动 `openpyxl` 回读校验 |
+| 两三个字母的缩写和短中文词经常漏掉 | 精确词表通道 + SQLite FTS5 + CJK 二元组离线检索 |
+| 容易编造页码、条款号，或者引到无关条目 | `review validate` 对照 `packets.json` 证据包逐条核对哈希 |
+| 英文单语定义容易被拿来硬套中文译名 | 先按领域、地区和双语性质过滤，不让英文单语定义背书中文改译 |
+| 几百个页面全扫完才出表，中途断了不好接续 | 每做完一个功能模块就落盘并增量更新到 Excel |
+| 表格里的公式文本和原词不好核对 | 6 列纯文本单元格防公式注入，导出后自动用 `openpyxl` 回读校验 |
 
 ## 主要功能
 
-- **自带术语库（BYOG）+ 联网证据落盘**：初始化工作区时会生成空白术语库槽位（`corpus/raw/`、`corpus/manifest.json`、`corpus/authority_policy.json`）。无论金融、医疗、制造、SaaS 还是电商，把 `PDF`、`HTML`、`XLSX`、`CSV` 术语表和规范放进去就能直接跑。本地库没命中时，宿主 Agent 可以联网查证，再用 `lingual-audit corpus add-web` 把网页 URL 和原文摘录落盘进 `corpus/web_cache/`，直接进入同一套本地索引和哈希核验流程；同时支持在 `authority_policy.json` 里按域名配置权威等级。
-- **三层证据校验（L1 > L2 > L3）**：审译严格按优先级结合三类依据——**L1 本地自带术语库**（最高权威）> **L2 联网查证缓存**（通过 `corpus add-web` 落证入库）> **L3 大模型语言判断**（无外部标准时用于识别明显错译、语病与裸露 Key，并在理由栏注明 `[LLM 语义判断]`）。
-- **按模块增量落盘交付**：每完成一个功能模块的采集和审译，立即落盘到 `records/pages/<page_id>.json` 并合并进 `records/review.json`，随即导出或更新 Excel 工作簿，后续每做完一个模块就往里补一个 Sheet，不用等全站扫完才看到结果。
-- **单文件 SQLite FTS5 与证据包级引用校验**：内置 `pdfplumber`、`BeautifulSoup`、`openpyxl` 和 `csv` 解析器，保留原文与 NFKC 归一化双视图（顺带修复 PDF 中常见的康熙部首偏旁如 `⼿`、`⽅`）。`review validate` 自动对照 `packets.json` 核对每条引用必须属于当前词条自身的证据包，拦截无证据改译和跨词条错配引用。
-- **实验性自动采集器与网络隔离**：`lingual-audit explore` 目前为实验性功能（需要 `playwright>=1.48`），支持 `quick`、`standard`、`thorough` 三档。它依赖 `[data-menu]`、`[data-i18n]`、`placeholder` 等标准语义标记，抓到 0 条词条时如实标为 `blocked` 而不会误报 `fully_inspected`。面对自定义 DOM 的真实系统，推荐直接用宿主浏览器工具或已录入的 UI JSON 走主流程。
-- **6 列着色防公式注入 Excel 与自动回读**：按功能菜单分 Sheet 输出，6 种结论状态各自配了浅底色方便筛选，所有单元格强制写为纯文本（`=SpotRate + Margin` 等不会变成公式），导出后自动执行 `openpyxl` 回读与行级 SHA-256 校验。
+- **自带术语库（BYOG）与联网证据落盘**：初始化工作区时会生成空白术语库目录（`corpus/raw/`、`corpus/manifest.json`、`corpus/authority_policy.json`）。无论什么行业，把 `PDF`、`HTML`、`XLSX` 或 `CSV` 格式的术语表和规范放进去就能直接跑，不需要改代码。本地库没命中时，可以让宿主 Agent 联网查证，再用 `lingual-audit corpus add-web` 把网页 URL 和原文摘录存到 `corpus/web_cache/`，直接进入同一套本地索引和哈希核验；`authority_policy.json` 里也可以按域名配置权威等级。
+- **三层证据校验**：审译按优先级结合三类依据：先查本地自带术语库（L1），未命中或需要消歧时走联网查证并落盘入库（L2），两者都没有外部标准时再由大模型结合上下文做语言判断（L3，并在理由栏写明 `[LLM 语义判断]`）。
+- **按模块增量交付**：每完成一个功能模块的采集和审译，直接把该模块写入 `records/pages/<page_id>.json` 并合并进 `records/review.json`，随即导出或更新 Excel 工作簿，后续每做完一个模块就往里补一个 Sheet，不用等全站扫完才看到成果。
+- **单文件 SQLite FTS5 与证据包级引用核验**：内置 `pdfplumber`、`BeautifulSoup`、`openpyxl` 和 `csv` 解析器，同时保存原文和 NFKC 归一化文本（顺带修掉 PDF 里常见的康熙部首偏旁，比如 `⼿`、`⽅`）。`review validate` 会对照 `packets.json` 检查每条引用是否真的来自当前词条的证据包，拦住无证据改译和跨词条错配引用。
+- **实验性自动采集器与网络隔离**：`lingual-audit explore` 目前为实验性功能（需要 `playwright>=1.48`），支持 `quick`、`standard`、`thorough` 三档。它依赖 `[data-menu]`、`[data-i18n]`、`placeholder` 等标准语义标记，如果页面抓到 0 条词条会如实标为 `blocked`，不会误报 `fully_inspected`。面对自定义 DOM 的真实系统，推荐用宿主浏览器工具或已录入的 UI JSON 走主流程。
+- **6 列着色 Excel 与自动回读**：按功能菜单分 Sheet 输出，6 种结论状态各自配了浅底色方便筛选。所有单元格强制写为纯文本，像 `=SpotRate + Margin` 这类内容不会变成 Excel 公式，导出后会自动用 `openpyxl` 回读核对内容和 SHA-256 哈希。
 
 ## 工作流总览
 
@@ -71,9 +65,9 @@ flowchart TD
 | C | `系统中文` | 页面观测到的目标语言原文（缺失时留空） |
 | D | `AI 建议中文` | 建议改译词（`保留` 或未核对到双语时留空） |
 | E | `比对结论` | 6 类着色结论状态，见下表 |
-| F | `修改理由与业务依据` | 只要结论不是 `保留` 就必须填写，从业务含义、风险和出处标签出发（如 `[CN-FX-2025 §1.1]`、`[Web:w3.org]`、`[LLM 语义判断]`） |
+| F | `修改理由与业务依据` | 只要结论不是 `保留` 就必须填写，写清业务含义、风险和出处标签（如 `[CN-FX-2025 §1.1]`、`[Web:w3.org]`、`[LLM 语义判断]`） |
 
-**结论状态口径**：`待核对` 只放确实没核对到双语的情况（未配对、单侧未观测、页面受限未展开）；只要中英文都已经核对到，不允许留中间态，除 `缺译`、`单语限制`、`来源冲突` 外，直接在 `保留` 和 `建议修改` 中二选一。
+`待核对` 只放确实没核对到双语的情况（未配对、单侧未观测、页面受限未展开）。只要中英文都已经核对到，就不留中间态，除 `缺译`、`单语限制`、`来源冲突` 外，直接在 `保留` 和 `建议修改` 里二选一。
 
 | `比对结论` | 单元格底色 | 适用场景 |
 |---|---|---|
@@ -87,7 +81,7 @@ flowchart TD
 ## 快速上手
 
 ```bash
-# 1. 创建虚拟环境并安装（支持源码 editable 安装，也支持构建 wheel 在仓库外直接运行）
+# 1. 创建虚拟环境并安装（支持源码 editable 安装，也支持构建 wheel 后在仓库外直接运行）
 python3 -m venv --system-site-packages .venv
 .venv/bin/pip install -e ".[dev,browser]"
 
@@ -123,10 +117,10 @@ python3 -m venv --system-site-packages .venv
 
 ## 与不同 AI 工具配合
 
-仓库内置自包含的 [SKILL.md](SKILL.md)、[references/](references) 和 [templates/](templates)，未打包任何第三方 Skill：
+仓库内置了 [SKILL.md](SKILL.md)、[references/](references) 和 [templates/](templates)，没有打包第三方 Skill：
 
-- **Claude Code / Codex / Antigravity / WorkBuddy**：直接加载本仓库根目录或将 `SKILL.md`、`references/`、`templates/` 放入宿主 Skills 目录即可自动识别触发。
-- **任意其他大模型 / Agent**：方法论和 CLI 本身都是模型无关的（LLM-agnostic）。你可以让任意模型读取 [SKILL.md](SKILL.md) 和 [references/](references) 里的协议，配合本机 `lingual-audit` CLI 完成检索引证、校验和导出。
+- **Claude Code / Codex / Antigravity / WorkBuddy**：直接加载本仓库根目录，或把 `SKILL.md`、`references/`、`templates/` 放到宿主 Skills 目录即可使用。
+- **其他大模型或 Agent**：审译流程和命令行工具本身不绑定特定模型。只要让模型读取 [SKILL.md](SKILL.md) 和 [references/](references) 里的规则，再配合本机 `lingual-audit` 命令做检索、校验和导出就行。
 
 ## 几个关键取舍
 
@@ -142,12 +136,12 @@ Web 界面里的词条大多很短，比如两三个字母的缩写或者两个�
 **把人工看审的 Excel 和机器校验的 JSON 分开。**
 业务同学看表时，希望左边一眼看清页面层级、中间靠颜色筛出待改项、右边直接看到业务角度的修改理由；工程验收则需要行级 SHA-256 哈希和可核验的出处 ID。Excel 保持 6 列干净好读，完整的结构化出处和校验信息放在同目录的 `review.json` 和 `delivery-manifest.json` 里，两边互不干扰。
 
-## Contributing
+## 参与贡献
 
-欢迎提 Issue 或 PR，尤其是多格式语料解析器增强、行业无关的黄金集评测样例、浏览器语义采集改进以及文档翻译。提交前请阅读 [CONTRIBUTING.md](CONTRIBUTING.md) 并确保 `ruff`、`pytest` 和 `lingual-audit sanitize-check` 全部通过。
+欢迎提 Issue 或 PR，比如补充多格式语料解析、跨行业脱敏测试样例、浏览器采集改进或文档翻译。具体环境搭建和检查命令见 [CONTRIBUTING.md](CONTRIBUTING.md)。
 
-## License
+## 开源协议
 
-本项目采用 [MIT License](LICENSE) 开源，允许自由使用、修改与分发。
+本项目基于 [MIT License](LICENSE) 开源。
 
 页面探索和文件化续跑的思路参考了 `app-docs` 与 `planning-with-files`，本仓库未打包任何第三方 Skill，所有规范、模板和工具链均按 MIT 协议独立实现。

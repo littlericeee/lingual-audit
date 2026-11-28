@@ -2,7 +2,7 @@
 
 # lingual-audit
 
-### Domain-agnostic bilingual UI audit Agent Skill and local hybrid RAG CLI for complex web systems
+Domain-agnostic bilingual UI audit Agent Skill and local hybrid RAG CLI for complex web systems
 
 [![License](https://img.shields.io/badge/License-MIT-yellow.svg)](LICENSE)
 [![Agent Skill](https://img.shields.io/badge/Agent%20Skill-Self--Contained-blue.svg)](SKILL.md)
@@ -12,21 +12,15 @@
 
 <br>
 
-Hundreds of web views carrying thousands of inconsistent labels, mistranslations, and exposed i18n keys?<br>
-Handing reference PDFs straight to an LLM leads to missed short acronyms, fabricated citations, and cross-menu drift?<br>
-Worried that probing form validation strings in a live app might trigger auto-save requests?<br>
-
-<br>
-
-**Bring-Your-Own-Glossary (BYOG) · Three-tier evidence · Incremental per-module export · 6-column color-coded Excel**
-
-[中文](README.md) · [Comparison](#why-not-a-raw-llm) · [What it does](#what-it-does) · [How it works](#how-it-works) · [Excel format](#excel-output-format) · [Quick start](#quick-start) · [Contributing](CONTRIBUTING.md)
+[中文](README.md) · [Comparison](#how-it-differs-from-raw-llm-review) · [What it does](#what-it-does) · [How it works](#how-it-works) · [Excel format](#excel-output-format) · [Quick start](#quick-start) · [Contributing](CONTRIBUTING.md)
 
 </div>
 
-`lingual-audit` splits bilingual UI auditing into two clean layers: the host LLM handles language judgment, while deterministic Python tools handle corpus indexing, hybrid retrieval, packet-bound citation checks, and Excel export with automatic read-back verification.
+`lingual-audit` is a domain-agnostic Agent Skill and Python CLI for auditing bilingual UI copy on complex web systems. It collects visible English and target-language strings from a running web app, checks them against your own glossaries and web-sourced standards using local hybrid retrieval, and exports a color-coded Excel workbook with packet-verified citations.
 
-## Why not a raw LLM
+Complex web apps in finance, healthcare, manufacturing, SaaS, e-commerce, or developer tooling tend to accumulate thousands of inconsistent labels, mistranslations, and raw i18n keys across hundreds of views. Auditing them by hand takes weeks. Handing reference PDFs straight to an LLM is faster, but models miss short terms, invent citations, drift across menus, and can accidentally trigger auto-save requests while clicking around forms. `lingual-audit` splits the job in two: the LLM handles language judgment, while deterministic Python tools handle retrieval, citation verification, and Excel export.
+
+## How it differs from raw LLM review
 
 | Handing reference PDFs straight to an LLM | `lingual-audit` |
 |---|---|
@@ -39,7 +33,7 @@ Worried that probing form validation strings in a live app might trigger auto-sa
 ## What it does
 
 - **Bring your own glossary (BYOG) + web evidence cache**: The workspace starts with an empty knowledge base slot (`corpus/raw/`, `corpus/manifest.json`, `corpus/authority_policy.json`). Drop in your own `PDF`, `HTML`, `XLSX`, or `CSV` glossaries for any industry without editing code. When the local glossary misses a term, the host agent can search the web and save the URL and verbatim excerpt with `lingual-audit corpus add-web` so web evidence flows through the same hash-checked index and citation verifier.
-- **Three-tier evidence hierarchy (L1 > L2 > L3)**: Reviews combine **L1 local BYOG glossaries** (highest authority), **L2 cached web evidence** (`corpus add-web`, ranked by optional `web_domain_tiers`), and **L3 LLM language judgment** (fallback for obvious mistranslations, phrasing errors, and raw keys, labeled `[LLM 语义判断]` in the rationale column).
+- **Three-tier evidence order**: Reviews check L1 local glossaries first, fall back to L2 cached web evidence (`corpus add-web`, ranked by optional `web_domain_tiers`), and use L3 LLM language judgment when neither provides an external bilingual standard (labeled `[LLM 语义判断]` in the rationale column).
 - **Incremental per-module delivery**: Finish one feature module, write its page inventory and review decisions to disk immediately, and re-export the Excel workbook so each completed module appends its sheet right away instead of waiting for hundreds of pages to finish.
 - **Local SQLite FTS5 retrieval with packet-bound citation checks**: Parsers extract both verbatim and NFKC-normalized text from multi-format documents, build an exact short-acronym channel (`FX`, `IRS`, `BIC`) alongside a CJK bigram index, and filter sources by domain, region, and target locale before comparing normative precedence. `review validate` checks every citation against `packets.json` so missing or unrelated citations are rejected.
 - **Experimental Playwright explorer with network isolation**: `lingual-audit explore` (experimental; requires `playwright>=1.48`) supports `quick`, `standard`, and `thorough` depths. It relies on semantic attributes (`[data-menu]`, `[data-i18n]`, `placeholder`) and marks pages with zero matched items as `blocked` rather than `fully_inspected`. For custom DOMs, record observations with your host browser tool or start from JSON inventory fixtures.
@@ -135,7 +129,7 @@ Reviewers want a clean sheet they can scan by color, with the UI path on the lef
 
 ## Contributing
 
-Issues and pull requests are welcome, especially parser improvements, domain-agnostic golden-set fixtures, browser capture enhancements, and translations. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, test commands, and sanitization rules.
+Issues and pull requests are welcome, especially parser improvements, domain-agnostic golden-set fixtures, browser capture work, and translations. See [CONTRIBUTING.md](CONTRIBUTING.md) for setup instructions, test commands, and sanitization rules.
 
 ## License
 
